@@ -1,0 +1,26 @@
+# ==========================
+# Project root ignored files
+# ==========================
+
+# Visual Studio project files and compilation output
+/out/**
+/.vs/**
+
+/CMakeSettings.json
+
+# VSCode-related project files and compilation output
+/build/**
+/.vscode/**
+
+# GLFW/GLEW downloaded from their websites
+/glfw/**
+/glew/**
+
+# Any compiled libraries or executable files
+**/*.exe
+**/*.dll
+**/*.lib
+# Linux platform-related compiled output files
+**/*.out
+**/*.a
+**/*.so
