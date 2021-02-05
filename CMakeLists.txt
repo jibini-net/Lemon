@@ -22,6 +22,9 @@ include_directories (${PROJECT_SOURCE_DIR}/glew/include)
 add_library (LemonCore STATIC
     "core/worker_thread.h"
     "core/worker_thread.cpp"
+
+    "core/logger.h"
+    "core/logger.cpp"
     )
 
 # Linux build requires linking of thread libraries

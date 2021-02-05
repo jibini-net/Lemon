@@ -3,6 +3,8 @@
 #include <chrono>
 #include <thread>
 
+#include "logger.h"
+
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
 //                    COPYRIGHT (c) 2021 by ZACH GOETHEL                      //
@@ -53,7 +55,7 @@ namespace lemon
                 } catch(const std::exception& ex)
                 {
                     auto error = ex.what();
-                    //TODO LOG
+                    this->log.error(std::string(error));
                 }
 
                 // Remove the executed task from the queue

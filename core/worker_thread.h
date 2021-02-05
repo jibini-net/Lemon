@@ -4,6 +4,9 @@
 #include <deque>
 #include <functional>
 #include <mutex>
+#include <thread>
+
+#include "logger.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -99,6 +102,11 @@ namespace lemon
          * @brief Synchronization mutex for the execution conditional variable.
          */
         std::mutex execute_mutex;
+
+        /**
+         * @brief A logger instance for log messages related to this class.
+         */
+        logger log { "Worker Thread" };
 
     public:
         /**

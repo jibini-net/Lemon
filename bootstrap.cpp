@@ -14,6 +14,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
+ * @brief The bootstrapper-specific logger instance for bootstrap log messages.
+ */
+lemon::logger _log("(Bootstrap)");
+
+/**
  * This function will be the first task posted to the main thread for execution.
  * 
  * Its primary purpose is to initialize the rendering engine and any required
@@ -26,7 +31,7 @@
 void start()
 {
     //TODO REMOVE
-    std::cout << std::this_thread::get_id() << std::endl;
+    _log.info("Hello, world!");
 }
 
 /**
@@ -43,6 +48,10 @@ void start()
  */
 int main()
 {
+	_log.info("\033[1;33m===============================================================");
+	_log.info("                 \033[1;31mLemon\033[0m created by \033[1;31mZach Goethel");
+	_log.info("\033[1;33m===============================================================");
+
     lemon::worker_thread main_thread(false);
 
     //TODO SPAWN ARBITRARY WORKER THREAD POOL
@@ -53,7 +62,7 @@ int main()
         auto worker = new lemon::worker_thread(true);
 
         worker->execute(start);
-        worker->execute([&] { std::cout << "Hello, world!" << std::endl; });
+        worker->execute([&] { throw std::runtime_error("Hello, world!"); });
     }
 
     main_thread.execute(start);
