@@ -1,8 +1,5 @@
 #pragma once
 
-#include "resource_stack.h"
-#include "worker_thread.h"
-
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
 //                    COPYRIGHT (c) 2021 by ZACH GOETHEL                      //
@@ -15,18 +12,5 @@
 
 namespace lemon
 {
-    /**
-     * @brief Worker thread for queuing and executing tasks on the main thread.
-     */
-    extern worker_thread main_thread;
-
-    /**
-     * @brief Global worker pool for multithreading across all system threads.
-     */
-    extern worker_pool main_pool;
-
-    /**
-     * @brief The application's global tiered resource allocation stack.
-     */
-    extern resource_stack main_resource_stack;
+    
 }

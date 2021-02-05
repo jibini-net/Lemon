@@ -20,11 +20,16 @@ include_directories (${PROJECT_SOURCE_DIR}/glew/include)
 # Register Lemon core and extension libraries
 #
 add_library (LemonCore STATIC
-    "core/worker_thread.h"
-    "core/worker_thread.cpp"
-
+    "core/bootstrap.h"
     "core/logger.h"
     "core/logger.cpp"
+
+    "core/worker_thread.h"
+    "core/worker_thread.cpp"
+    "core/resource_stack.h"
+    #"core/resource_stack.cpp"
+    "core/context.h"
+    #"core/context.cpp"
     )
 
 # Linux build requires linking of thread libraries
@@ -63,7 +68,7 @@ target_link_libraries (LemonExt_OpenGL LemonExt_GLFW)
 # Lemon core executable for context bootstrap
 #
 add_executable (LemonRuntime
-    "bootstrap.cpp"
+    "core/bootstrap.cpp"
     )
 # Lemon runtime requires core library
 target_link_libraries (LemonRuntime LemonCore)

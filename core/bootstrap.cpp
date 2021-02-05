@@ -1,8 +1,9 @@
+#include "bootstrap.h"
+
 #include <iostream>
 #include <thread>
 
-#include "core/bootstrap.h"
-#include "core/worker_thread.h"
+#include "worker_thread.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -14,20 +15,21 @@
 //  ------------------------------------------------------------------------  //
 ////////////////////////////////////////////////////////////////////////////////
 
-
 namespace lemon
 {
-    // Initially create the global worker pointers
-    worker_thread* main_thread = nullptr;
-    worker_pool* main_pool = nullptr;
-
     /**
      * @brief The bootstrapper-specific logger instance for bootstrap log messages.
      */
     logger _log("(Bootstrap)");
 
+    worker_thread main_thread(false);
+    worker_pool main_pool;
+
+    resource_stack main_resource_stack;
+
     /**
      * This function will be the first task posted to the main thread for execution.
+     * It may post future tasks, but may not hang infinitely.
      * 
      * Its primary purpose is to initialize the rendering engine and any required
      * contexts for applications maintained by this runtime instance. This may also
@@ -38,7 +40,7 @@ namespace lemon
      */
     void start()
     {
-        _log.info("Hello, world!");
+        
     }
 }
 
@@ -60,13 +62,8 @@ int main()
 	lemon::_log.info("                 \033[1;31mLemon\033[0m created by \033[1;31mZach Goethel");
 	lemon::_log.info("\033[1;33m===============================================================");
 
-    lemon::_log.debug("Bootstrapping initial worker threads and thread pools");
-    lemon::main_thread = new lemon::worker_thread(false);
-    lemon::main_pool = new lemon::worker_pool();
-
-    lemon::_log.debug("Queuing start sequence; main thread will be consumed");
-    lemon::main_thread->execute(lemon::start);
-    lemon::main_thread->park();
+    lemon::main_thread.execute(lemon::start);
+    lemon::main_thread.park();
 
     return 0;
 }
