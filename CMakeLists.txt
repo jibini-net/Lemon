@@ -35,19 +35,25 @@ if (UNIX)
 endif (UNIX)
 
 # Extension implementation for GLFW
-add_library (LemonExt_GLFW STATIC "ext_glfw/ext_glfw.cpp")
+add_library (LemonExt_GLFW STATIC
+    "ext_glfw/ext_glfw.cpp"
+    )
 # GLFW extension requires core library
 target_link_libraries (LemonExt_GLFW LemonCore)
 
 # Extension implementation for OpenGL
-add_library (LemonExt_OpenGL STATIC "ext_opengl/ext_opengl.cpp")
+add_library (LemonExt_OpenGL STATIC
+    "ext_opengl/ext_opengl.cpp"
+    )
 # OpenGL extension requires core library
 target_link_libraries (LemonExt_OpenGL LemonCore)
 # OpenGL extension requires GLFW
 target_link_libraries (LemonExt_OpenGL LemonExt_GLFW)
 
 # Extension implementation for Vulkan
-add_library (LemonExt_Vulkan STATIC "ext_vulkan/ext_vulkan.cpp")
+add_library (LemonExt_Vulkan STATIC
+    "ext_vulkan/ext_vulkan.cpp"
+    )
 # Vulkan extension requires core library
 target_link_libraries (LemonExt_OpenGL LemonCore)
 # Vulkan extension requires GLFW

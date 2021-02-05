@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <condition_variable>
 #include <deque>
 #include <functional>
@@ -202,6 +203,16 @@ namespace lemon
          */
         int num_workers;
 
+        /**
+         * @brief Atomic counter for round-robin load balancing across workers.
+         */
+        std::atomic<int> round_robin;
+
+        /**
+         * @brief A logger instance for log messages related to this class.
+         */
+        logger log { "Worker Pool" };
+
     public:
         /**
          * Upon construction of a worker thread pool, several worker threads
@@ -228,5 +239,21 @@ namespace lemon
          * @brief Destroys and deallocates the worker thread pool.
          */
         ~worker_pool();
+
+        /**
+         * Adds the provided function to a selected worker thread's execution
+         * queue.  The exact implementation of the worker selection (load-
+         * balancing) is undefined and subject to change, but expect a round-
+         * robin or "shortest queue" selection of a worker thread to perform
+         * the provided task.
+         * 
+         * There is no guarantee of execution order for tasks provided to this
+         * method.  No two sequential tasks may necessarily be assigned to the 
+         * same worker's queue, thus execution order is unpredictable.
+         * 
+         * @brief Enqueues the task to execute on a worker thread.
+         * @param task Function containing the task to queue for execution.
+         */
+        void execute(std::function<void()> task);
     };
 }

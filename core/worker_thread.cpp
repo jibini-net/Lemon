@@ -55,7 +55,7 @@ namespace lemon
                 } catch(const std::exception& ex)
                 {
                     auto error = ex.what();
-                    this->log.error(std::string(error));
+                    log.error(error);
                 }
 
                 // Remove the executed task from the queue
@@ -77,6 +77,8 @@ namespace lemon
 
     worker_pool::worker_pool(int num_workers)
     {
+        log.debug("Starting up a thread pool with " + std::to_string(num_workers) + " members");
+
         // Store the number of worker threads
         this->num_workers = num_workers;
         // Allocate the array of threads
@@ -94,5 +96,15 @@ namespace lemon
             delete this->workers[i];
         // Free the worker array memory
         delete[] workers;
+    }
+
+    //TODO BETTER LOAD BALANCING
+    void worker_pool::execute(std::function<void()> task)
+    {
+        // Select the next round-robin thread
+        auto worker_index = this->round_robin.fetch_add(1) % this->num_workers;
+        auto worker = this->workers[worker_index];
+        // Enqueue the provied task in that thread
+        worker->execute(task);
     }
 }

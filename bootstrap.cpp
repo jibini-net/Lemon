@@ -1,6 +1,7 @@
 #include <iostream>
 #include <thread>
 
+#include "core/bootstrap.h"
 #include "core/worker_thread.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -13,25 +14,32 @@
 //  ------------------------------------------------------------------------  //
 ////////////////////////////////////////////////////////////////////////////////
 
-/**
- * @brief The bootstrapper-specific logger instance for bootstrap log messages.
- */
-lemon::logger _log("(Bootstrap)");
 
-/**
- * This function will be the first task posted to the main thread for execution.
- * 
- * Its primary purpose is to initialize the rendering engine and any required
- * contexts for applications maintained by this runtime instance. This may also
- * include creating additional threads and contexts, loading configuration, and
- * allocating resources as necessary to start applications.
- * 
- * @brief Runtime instance initialization and bootstrapping method.
- */
-void start()
+namespace lemon
 {
-    //TODO REMOVE
-    _log.info("Hello, world!");
+    // Initially create the global worker pointers
+    worker_thread* main_thread = nullptr;
+    worker_pool* main_pool = nullptr;
+
+    /**
+     * @brief The bootstrapper-specific logger instance for bootstrap log messages.
+     */
+    logger _log("(Bootstrap)");
+
+    /**
+     * This function will be the first task posted to the main thread for execution.
+     * 
+     * Its primary purpose is to initialize the rendering engine and any required
+     * contexts for applications maintained by this runtime instance. This may also
+     * include creating additional threads and contexts, loading configuration, and
+     * allocating resources as necessary to start applications.
+     * 
+     * @brief Runtime instance initialization and bootstrapping method.
+     */
+    void start()
+    {
+        _log.info("Hello, world!");
+    }
 }
 
 /**
@@ -48,25 +56,17 @@ void start()
  */
 int main()
 {
-	_log.info("\033[1;33m===============================================================");
-	_log.info("                 \033[1;31mLemon\033[0m created by \033[1;31mZach Goethel");
-	_log.info("\033[1;33m===============================================================");
+	lemon::_log.info("\033[1;33m===============================================================");
+	lemon::_log.info("                 \033[1;31mLemon\033[0m created by \033[1;31mZach Goethel");
+	lemon::_log.info("\033[1;33m===============================================================");
 
-    lemon::worker_thread main_thread(false);
+    lemon::_log.debug("Bootstrapping initial worker threads and thread pools");
+    lemon::main_thread = new lemon::worker_thread(false);
+    lemon::main_pool = new lemon::worker_pool();
 
-    //TODO SPAWN ARBITRARY WORKER THREAD POOL
-    int num_threads = std::thread::hardware_concurrency();
-    //TODO REMOVE
-    for (int i = 0; i < num_threads; i++)
-    {
-        auto worker = new lemon::worker_thread(true);
-
-        worker->execute(start);
-        worker->execute([&] { throw std::runtime_error("Hello, world!"); });
-    }
-
-    main_thread.execute(start);
-    main_thread.park();
+    lemon::_log.debug("Queuing start sequence; main thread will be consumed");
+    lemon::main_thread->execute(lemon::start);
+    lemon::main_thread->park();
 
     return 0;
 }
