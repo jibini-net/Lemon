@@ -23,10 +23,18 @@ namespace lemon
 	/**
 	 * @brief A globally shared mutex with which to synchronize logging.
 	 */
-	std::mutex global_log_mutex;
+	std::mutex* global_log_mutex = nullptr;
+
+	void ensure_global_log_mutex()
+	{
+		if (global_log_mutex == nullptr)
+			global_log_mutex = new std::mutex();
+	}
 
 	logger::logger(std::string pattern, std::string name)
 	{
+		ensure_global_log_mutex();
+
 		this->pattern = pattern;
 		this->name = name;
 	}
@@ -54,7 +62,7 @@ namespace lemon
 	void logger::log(std::string level, std::string level_color, std::string message)
 	{
 		// Lock mutex in order to synchronize logging
-		std::unique_lock<std::mutex> lock(global_log_mutex);
+		std::unique_lock<std::mutex> lock(*global_log_mutex);
 
 		// Convert to C strings and capture time
 		auto pattern_c = pattern.c_str();
@@ -78,7 +86,7 @@ namespace lemon
 
 		// Iterate through the pattern string
 		//TODO ADD ADDITIONAL DOCUMENTATION
-		for (int i = 0; i < pattern.length(); i++)
+		for (unsigned int i = 0; i < pattern.length(); i++)
 		{
 			char c = pattern_c[i];
 

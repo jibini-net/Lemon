@@ -39,6 +39,11 @@ if (UNIX)
     target_link_libraries (LemonCore PRIVATE Threads::Threads)
 endif (UNIX)
 
+# Disable warnings on windows related to logger
+if (MSVC)
+    add_definitions (-D_CRT_SECURE_NO_WARNINGS)
+endif (MSVC)
+
 # Extension implementation for GLFW
 add_library (LemonExt_GLFW STATIC
     "ext_glfw/ext_glfw.cpp"

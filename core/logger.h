@@ -16,7 +16,7 @@
 
 namespace lemon
 {
-	extern std::mutex global_log_mutex;
+	extern std::mutex* global_log_mutex;
 
 	/**
 	 * A rudimentary logger which provides various levels of severity for logged
