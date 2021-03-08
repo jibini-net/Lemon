@@ -62,7 +62,7 @@ namespace lemon
 	void logger::log(std::string level, std::string level_color, std::string message)
 	{
 		// Lock mutex in order to synchronize logging
-		std::unique_lock<std::mutex> lock(*global_log_mutex);
+		std::lock_guard<std::mutex> lock(*global_log_mutex);
 
 		// Convert to C strings and capture time
 		auto pattern_c = pattern.c_str();

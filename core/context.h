@@ -64,12 +64,14 @@ namespace lemon
             /**
              * @brief Constructs a new context object, starting a new thread.
              */
-            context();
+            context()
+            { };
 
             /**
              * @brief Destroy the context object and deallocates resources.
              */
-            ~context();
+            ~context()
+            { };
 
             /**
              * Enqueues a context-related task to be performed on the context's
@@ -79,6 +81,12 @@ namespace lemon
              * 
              * This method will enqueue the provided task, but may also perform
              * validation and error-checking for the provided task.
+             * 
+             * Provided tasks should be considered atomic operations or "atomic"
+             * groups of operations; only one operation should be executed at
+             * any given time, and any operations which should be executed in a
+             * specific order (or must be executed together) should be grouped
+             * together into a single submitted task.
              * 
              * @brief Runs a task related to this context within this context.
              * @param task Context-related task to enqueue for execution from

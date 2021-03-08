@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "worker_thread.h"
+#include "ext_glfw/ext_glfw.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -27,6 +28,8 @@ namespace lemon
 
     resource_stack main_resource_stack;
 
+    glfw_context* temp_context;
+
     /**
      * This function will be the first task posted to the main thread for execution.
      * It may post future tasks, but may not hang infinitely.
@@ -40,7 +43,9 @@ namespace lemon
      */
     void start()
     {
+        temp_context = new glfw_context();
         
+        delete temp_context;
     }
 }
 
@@ -56,11 +61,11 @@ namespace lemon
  * 
  * @brief Spawns the threads required for the runtime prior to initialization.
  */
-int main()
+int main(void)
 {
-	lemon::_log.info("\033[1;33m===============================================================");
-	lemon::_log.info("                 \033[1;31mLemon\033[0m created by \033[1;31mZach Goethel");
-	lemon::_log.info("\033[1;33m===============================================================");
+    lemon::_log.info("\033[1;33m===============================================================");
+    lemon::_log.info("                 \033[1;31mLemon\033[0m created by \033[1;31mZach Goethel");
+    lemon::_log.info("\033[1;33m===============================================================");
 
     lemon::main_thread.execute(lemon::start);
     lemon::main_thread.park();

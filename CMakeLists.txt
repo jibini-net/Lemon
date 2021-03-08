@@ -10,13 +10,6 @@ set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 #
-# Include source roots from project and GLFW/GLEW
-#
-include_directories (${PROJECT_SOURCE_DIR})
-include_directories (${PROJECT_SOURCE_DIR}/glfw/include)
-include_directories (${PROJECT_SOURCE_DIR}/glew/include)
-
-#
 # Register Lemon core and extension libraries
 #
 add_library (LemonCore STATIC
@@ -29,7 +22,7 @@ add_library (LemonCore STATIC
     "core/resource_stack.h"
     #"core/resource_stack.cpp"
     "core/context.h"
-    #"core/context.cpp"
+    "core/context.cpp"
     )
 
 # Linux build requires linking of thread libraries
@@ -46,6 +39,7 @@ endif (MSVC)
 
 # Extension implementation for GLFW
 add_library (LemonExt_GLFW STATIC
+    "ext_glfw/ext_glfw.h"
     "ext_glfw/ext_glfw.cpp"
     )
 # GLFW extension requires core library
@@ -99,8 +93,12 @@ target_link_libraries (LemonExt_Vulkan Vulkan::Vulkan)
 #
 # GLFW v3.3.2 (extract into project directory)
 #
+set (GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
+set (GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
+set (GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
 add_subdirectory ("glfw")
-target_link_libraries (LemonExt_GLFW ${GLFW_LIBRARIES})
+target_link_libraries (LemonExt_GLFW glfw ${GLFW_LIBRARIES})
 
 #
 # GLEW v2.1.0 (extract into project directory)
@@ -114,3 +112,10 @@ target_link_libraries (LemonExt_GLFW ${GLFW_LIBRARIES})
 #
 add_subdirectory ("glew/build/cmake")
 target_link_libraries (LemonExt_OpenGL glew_s ${GLEW_LIBRARIES})
+
+#
+# Include source roots from project and GLFW/GLEW
+#
+include_directories (${PROJECT_SOURCE_DIR})
+include_directories (${PROJECT_SOURCE_DIR}/glfw/include)
+include_directories (${PROJECT_SOURCE_DIR}/glew/include)

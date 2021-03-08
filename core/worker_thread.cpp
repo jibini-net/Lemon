@@ -14,6 +14,8 @@
 
 namespace lemon
 {
+    thread_local int mut_count = 0;
+
     worker_thread::worker_thread(bool create_thread)
     {
         if (create_thread)
@@ -26,7 +28,7 @@ namespace lemon
         // Cannot run a worker thread on two separate threads; this may result
         // in unexpected dequeue behavior
         if (is_parked)
-            throw std::runtime_error("Cannot park a worker thread on two separate threads");
+            throw std::runtime_error("Cannot park a single worker thread more than once concurrently");
         // Set the parked flag to true to avoid the above issue
         is_parked = true;
 
@@ -35,12 +37,14 @@ namespace lemon
         {
             // Claim the execution mutex for waiting
             std::unique_lock<std::mutex> execute_lock(this->execute_mutex);
+            
             // Wait until the execution queue is not empty
             if (execution_queue.size() == 0)
                 execute_condition.wait(execute_lock);
 
             // Claim the queue mutex for dequeue
-            std::unique_lock<std::mutex> queue_lock(this->queue_mutex);
+            if (mut_count++ == 0)
+                this->queue_mutex.lock();
 
             // Iterate over the entire queue until empty
             while (this->execution_queue.size() > 0)
@@ -58,18 +62,27 @@ namespace lemon
                 // Remove the executed task from the queue
                 this->execution_queue.pop_front();
             }
+
+            // Unlock when this thread gives up mutex
+            if (--mut_count == 0)
+                this->queue_mutex.unlock();
         }
     }
 
     void worker_thread::execute(std::function<void()> task)
     {
         // Claim the queue mutex for enqueue
-        std::unique_lock<std::mutex> queue_lock(this->queue_mutex);
+            if (mut_count++ == 0)
+                this->queue_mutex.lock();
 
         // Queue the provided task
         this->execution_queue.push_back(task);
         // Notify the execution thread that the queue has a task
         this->execute_condition.notify_all();
+
+        // Unlock when this thread gives up mutex
+        if (--mut_count == 0)
+            this->queue_mutex.unlock();
     }
 
     worker_pool::worker_pool(int num_workers)
