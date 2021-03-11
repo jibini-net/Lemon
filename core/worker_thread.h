@@ -65,6 +65,11 @@ namespace lemon
         std::deque<std::function<void()>> execution_queue;
 
         /**
+         * @brief Stores which thread on which this worker is operating.
+         */
+        std::thread::id thread_id;
+
+        /**
          * Indicates whether this worker thread is running on a parked thread.
          * A worker thread may not be parked on two threads, as that may cause
          * unexpected or undefined behavior with two threads pulling from the
@@ -158,6 +163,12 @@ namespace lemon
          * @param task Function containing the task to queue for execution.
          */
         void execute(std::function<void()> task);
+
+        /**
+         * @brief Performs execution and hangs until the task is complete.
+         * @param task Function containing the task to queue for execution.
+         */
+        void execute_wait(std::function<void()> task);
     };
 
     /**

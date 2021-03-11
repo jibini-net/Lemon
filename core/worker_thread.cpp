@@ -14,7 +14,13 @@
 
 namespace lemon
 {
+    // Counter to avoid hardlock on a given thread
     thread_local int mut_count = 0;
+
+    // Synchronization objects for awaiting task execution
+    thread_local std::mutex await_mutex;
+    // Conditional variable for awaiting task execution
+    std::condition_variable await_condition;
 
     worker_thread::worker_thread(bool create_thread)
     {
@@ -31,6 +37,7 @@ namespace lemon
             throw std::runtime_error("Cannot park a single worker thread more than once concurrently");
         // Set the parked flag to true to avoid the above issue
         is_parked = true;
+        thread_id = std::this_thread::get_id();
 
         // Loop until the park flag is disabled (likely infinite)
         while (is_parked)
@@ -71,6 +78,22 @@ namespace lemon
 
     void worker_thread::execute(std::function<void()> task)
     {
+        // Protection for a thread queueing onto itself
+        if (std::this_thread::get_id() == this->thread_id)
+        {
+            // Run task directly to avoid hardlocks
+            try
+            {
+                task();
+            } catch(const std::exception& ex)
+            {
+                auto error = ex.what();
+                log.error(error);
+            }
+            
+            return;
+        }
+
         // Claim the queue mutex for enqueue
             if (mut_count++ == 0)
                 this->queue_mutex.lock();
@@ -83,6 +106,26 @@ namespace lemon
         // Unlock when this thread gives up mutex
         if (--mut_count == 0)
             this->queue_mutex.unlock();
+    }
+
+    void worker_thread::execute_wait(std::function<void()> task)
+    {
+        // Latched state to avoid hardlock
+        std::atomic_bool complete = false;
+
+        // Wrap the task with synchronization operations
+        execute([&]()
+        {
+            task();
+            
+            // Notify waiting thread that task is complete
+            complete = true;
+            await_condition.notify_all();
+        });
+
+        // Wait until notification that task is complete
+        std::unique_lock<std::mutex> lock(await_mutex);
+        await_condition.wait(lock, [&]() { return complete.load(); });
     }
 
     worker_pool::worker_pool(int num_workers)

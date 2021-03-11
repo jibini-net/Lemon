@@ -18,7 +18,8 @@ namespace lemon
     glfw_context::glfw_context() : context()
     {
         // GLFW operations must be executed on the main thread
-        main_thread.execute([&]()
+        // Operation will hang until executed
+        main_thread.execute_wait([&]()
         {
             // Initialize if this is the first/only context
             if (glfw_context::context_count.fetch_add(1) == 0)
@@ -35,7 +36,8 @@ namespace lemon
     glfw_context::~glfw_context()
     {
         // GLFW operations must be executed on the main thread
-        main_thread.execute([&]()
+        // Operation will hang until executed
+        main_thread.execute_wait([&]()
         {
             // Terminate if this is the last/only context
             if (glfw_context::context_count.fetch_sub(1) == 1)

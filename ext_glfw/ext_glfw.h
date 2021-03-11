@@ -1,7 +1,6 @@
 #include "GLFW/glfw3.h"
 
 #include <exception>
-#include <atomic>
 
 #include "core/context.h"
 #include "core/bootstrap.h"
