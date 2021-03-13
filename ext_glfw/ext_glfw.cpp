@@ -13,7 +13,7 @@
 namespace lemon
 {
     // Initialize static context counter
-    std::atomic<int> glfw_context::context_count = 0;
+    std::atomic<int> glfw_context::context_count(0);
 
     glfw_context::glfw_context() : context()
     {

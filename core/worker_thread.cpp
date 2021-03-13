@@ -111,7 +111,7 @@ namespace lemon
     void worker_thread::execute_wait(std::function<void()> task)
     {
         // Latched state to avoid hardlock
-        std::atomic_bool complete = false;
+        std::atomic_bool complete(false);
 
         // Wrap the task with synchronization operations
         execute([&]()
