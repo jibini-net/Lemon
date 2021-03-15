@@ -20,7 +20,7 @@ add_library (LemonCore STATIC
     "core/worker_thread.h"
     "core/worker_thread.cpp"
     "core/resource_stack.h"
-    #"core/resource_stack.cpp"
+    "core/resource_stack.cpp"
     "core/context.h"
     "core/context.cpp"
     )

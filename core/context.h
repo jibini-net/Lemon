@@ -2,6 +2,7 @@
 
 #include <functional>
 
+#include "resource_stack.h"
 #include "worker_thread.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -61,18 +62,6 @@ namespace lemon
             worker_thread thread;
         
         public:
-            /**
-             * @brief Constructs a new context object, starting a new thread.
-             */
-            context()
-            { };
-
-            /**
-             * @brief Destroy the context object and deallocates resources.
-             */
-            ~context()
-            { };
-
             /**
              * Enqueues a context-related task to be performed on the context's
              * dedicated thread.  This method's implementation must be thread-

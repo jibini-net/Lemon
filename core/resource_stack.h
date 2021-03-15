@@ -1,6 +1,7 @@
 #pragma once
 
 #include <deque>
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -44,14 +45,19 @@ namespace lemon
          * a stack of resource groups and may be dynamically pushed into and
          * popped out of.
          * 
-         * References to managed objects are stored in buckets which are stored
-         * in this stack.
+         * References to objects' deletion functions are stored in buckets which
+         * are stored on this stack.
          * 
-         * @brief The allocation stack; a stack of collections of pointers.
+         * @brief The allocation stack; a stack of collections of functions.
          */
-        std::deque<std::vector<void*>> allocation_stack;
+        std::deque<std::vector<std::function<void()>>> allocation_stack;
 
     public:
+        /**
+         * @brief Constructs a new resource stack object with an initial bucket.
+         */
+        resource_stack();
+
         /**
          * This operation will push a new and empty resource group onto the
          * resource stack, thus storing the current group of resources as-is
@@ -87,6 +93,18 @@ namespace lemon
          * @param resource Resource to add to the current group; when the
          *      current group is popped, this resource will be destroyed.
          */
-        void attach(void* resource);
+        template <class T>
+        void attach(T resource)
+        {
+            // Create a bucket if there are no buckets
+            if (this->allocation_stack.size() == 0)
+                this->push();
+            
+            // Attach the provided resource to the current bucket
+            this->allocation_stack.back().push_back([=]()
+            {
+                delete resource;
+            });
+        }
     };
 }

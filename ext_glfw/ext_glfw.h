@@ -39,9 +39,14 @@ namespace lemon
              */
             static std::atomic<int> context_count;
 
-
+            /**
+             * @brief Constructs a new GLFW context object.
+             */
             glfw_context();
 
+            /**
+             * @brief Destroys the GLFW context object.
+             */
             ~glfw_context();
     };
 }

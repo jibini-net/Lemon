@@ -28,8 +28,6 @@ namespace lemon
 
     resource_stack main_resource_stack;
 
-    glfw_context* temp_context;
-
     /**
      * This function will be the first task posted to the main thread for execution.
      * It may post future tasks, but may not hang infinitely.
@@ -43,9 +41,16 @@ namespace lemon
      */
     void start()
     {
-        temp_context = new glfw_context();
+        // Global GLFW context is at base of stack
+        main_resource_stack.attach(new glfw_context());
+        main_resource_stack.push();
         
-        delete temp_context;
+        // Context-specific resources are above on the stack
+
+        // Delete context-specific resources
+        main_resource_stack.pop();
+        // Delete the global GLFW library context
+        main_resource_stack.pop();
     }
 }
 
