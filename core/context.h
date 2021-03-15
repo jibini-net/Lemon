@@ -27,7 +27,7 @@ namespace lemon
      * 
      * By wrapping the context, an abstraction layer is provided to construct
      * and deconstruct context objects.  In this way, a graphical context can
-     * be treated as another object which can be scoped with smart-pointers or
+     * be treated as any other object which can be scoped with smart-pointers or
      * constructed on demand.
      * 
      * Each context implementation should create a single context upon

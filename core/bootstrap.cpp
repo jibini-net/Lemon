@@ -24,9 +24,9 @@ namespace lemon
     logger _log("(Bootstrap)");
 
     worker_thread main_thread(false);
-    worker_pool main_pool;
+    worker_pool primary_pool;
 
-    resource_stack main_resource_stack;
+    resource_stack primary_resources;
 
     /**
      * This function will be the first task posted to the main thread for execution.
@@ -41,16 +41,10 @@ namespace lemon
      */
     void start()
     {
-        // Global GLFW context is at base of stack
-        main_resource_stack.attach(new glfw_context());
-        main_resource_stack.push();
+        resource_hold hold(primary_resources);
         
-        // Context-specific resources are above on the stack
-
-        // Delete context-specific resources
-        main_resource_stack.pop();
-        // Delete the global GLFW library context
-        main_resource_stack.pop();
+        // Global GLFW context is at base of stack
+        primary_resources.attach(new glfw_context());
     }
 }
 

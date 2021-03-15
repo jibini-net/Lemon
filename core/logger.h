@@ -42,6 +42,11 @@ namespace lemon
 		 */
 		std::string pattern;
 
+		/**
+		 * @brief A globally shared mutex with which to synchronize logging.
+		 */
+		static std::mutex global_log_mutex;
+
 	public:
 		/**
 		 * @brief Constructs a new named logger. Name the logger after the

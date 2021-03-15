@@ -21,7 +21,7 @@ namespace lemon
     void resource_stack::push()
     {
         // Push next empty bucket onto the top of the stack
-        // this->allocation_stack.push_back(std::vector<std::function<void()>>());
+        //this->allocation_stack.push_back(std::vector<std::function<void()>>());
         this->allocation_stack.emplace_back();
     }
 
@@ -38,5 +38,16 @@ namespace lemon
             (current[i])();
         // Pop the top of the stack
         this->allocation_stack.pop_back();
+    }
+
+    resource_hold::resource_hold(resource_stack& stack)
+    {
+        this->stack = &stack;
+        this->stack->push();
+    }
+
+    resource_hold::~resource_hold()
+    {
+        this->stack->pop();
     }
 }

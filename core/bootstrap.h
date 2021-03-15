@@ -23,10 +23,10 @@ namespace lemon
     /**
      * @brief Global worker pool for multithreading across all system threads.
      */
-    extern worker_pool main_pool;
+    extern worker_pool primary_pool;
 
     /**
      * @brief The application's global tiered resource allocation stack.
      */
-    extern resource_stack main_resource_stack;
+    extern resource_stack primary_resources;
 }

@@ -20,13 +20,13 @@
  * resources into several groups; the first group in will be the last group to
  * be deallocated.
  * 
- * For example, the base tier of the resource stack may contain vital a vital
- * engine resource or context.  Higher tiers on the stack may contain shaders
- * and other objects which are relavant to a single operation or period of time.
- * These tiers can be pushed and popped, where pushing stores the current group
- * of resources and pushes a new empty group onto the resource stack.  Popping
- * will delete all resources in the current resource group and return the stack
- * to the next lowest tier.
+ * For example, the base tier of the resource stack may contain a vital engine
+ * resource or context.  Higher tiers on the stack may contain shaders and other
+ * objects which are relavant to a single operation or period of time. These
+ * tiers can be pushed and popped, where pushing stores the current group of 
+ * resources and pushes a new empty group onto the resource stack.  Popping will
+ * delete all resources in the current resource group and return the stack to
+ * the next lowest tier.
  * 
  * This design concept follows the idea that an application behavior over time
  * will follow that of a stack, where the application may push in and out of
@@ -65,6 +65,10 @@ namespace lemon
          * 
          * This represents the application entering deeper into its runtime
          * state, such as entering a specific region or window.
+         * 
+         * Ensure that pop is called once this resource scope has exited. Not
+         * popping the stack may lead to a stack overflow error or a memory leak
+         * with undeleted unused resources.
          * 
          * @brief Pushes the resource stack with a new resource group.
          */
@@ -106,5 +110,38 @@ namespace lemon
                 delete resource;
             });
         }
+    };
+
+    /**
+     * Similarly to the STL lock guard, this object will push and pop a resource
+     * stack with construction and destruction respectively.  This ensures that
+     * a resource stack will always be popped when it is pushed.
+     * 
+     * Keep in mind that when this object's scope is exited or it is deleted or
+     * freed, any resources in the stack's current bucket will be freed.
+     * 
+     * @brief A scoped object which pushes and pops a resource stack.
+     * @author Zach Goethel
+     */
+    class resource_hold
+    {
+        private:
+            /**
+             * @brief Pointer to the resource stack this hold is on.
+             */
+            resource_stack* stack;
+
+        public:
+            /**
+             * @brief Constructs a new resource hold object; pushes the provided
+             *      resource stack.
+             * @param stack Pointer to the resource stack this hold is on.
+             */
+            resource_hold(resource_stack& stack);
+
+            /**
+             * @brief Destroys the resource hold object; pops the resource stack.
+             */
+            ~resource_hold();
     };
 }
