@@ -135,7 +135,7 @@ namespace lemon
             /**
              * @brief Constructs a new resource hold object; pushes the provided
              *      resource stack.
-             * @param stack Pointer to the resource stack this hold is on.
+             * @param stack Reference to the resource stack this hold is on.
              */
             resource_hold(resource_stack& stack);
 

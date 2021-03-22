@@ -30,7 +30,7 @@ namespace lemon
 
     /**
      * This function will be the first task posted to the main thread for execution.
-     * It may post future tasks, but may not hang infinitely.
+     * It may post future tasks, but must not hang infinitely.
      * 
      * Its primary purpose is to initialize the rendering engine and any required
      * contexts for applications maintained by this runtime instance. This may also
