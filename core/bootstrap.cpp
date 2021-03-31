@@ -58,7 +58,7 @@ namespace lemon
  * of threads created is subject to change. These threads are global and may be
  * used by multiple contexts; they are not specific to any single context.
  * 
- * @brief Spawns the threads required for the runtime prior to initialization.
+ * @brief Bootstraps the runtime in preparation for application operations.
  */
 int main(void)
 {
