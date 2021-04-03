@@ -49,4 +49,9 @@ namespace lemon
             }
         });
     }
+
+    void glfw_context::poll()
+    {
+        main_thread.execute_wait(::glfwPollEvents);
+    }
 }

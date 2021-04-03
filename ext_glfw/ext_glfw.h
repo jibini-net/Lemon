@@ -1,8 +1,11 @@
+#pragma once
+
 #include "GLFW/glfw3.h"
 
 #include <exception>
 
 #include "core/context.h"
+#include "core/logger.h"
 #include "core/bootstrap.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,6 +41,11 @@ namespace lemon
              * @brief Tracks the number of contexts managed under GLFW.
              */
             static std::atomic<int> context_count;
+
+            /**
+             * @brief Invokes a GLFW input poll on the main thread.
+             */
+            void poll();
 
             /**
              * @brief Constructs a new GLFW context object.

@@ -4,6 +4,8 @@
 #include <thread>
 
 #include "worker_thread.h"
+
+#include "ext_opengl/ext_opengl.h"
 #include "ext_glfw/ext_glfw.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -41,10 +43,10 @@ namespace lemon
      */
     void start()
     {
-        resource_hold hold(primary_resources);
+        //resource_hold hold(primary_resources);
         
         // Global GLFW context is at base of stack
-        primary_resources.attach(new glfw_context());
+        primary_resources.attach(new gl_context(4, 3, true, true));
     }
 }
 
