@@ -3,6 +3,7 @@
 #include <iostream>
 #include <thread>
 
+#include "application.h"
 #include "worker_thread.h"
 
 #include "ext_opengl/ext_opengl.h"
@@ -28,8 +29,6 @@ namespace lemon
     worker_thread main_thread(false);
     worker_pool primary_pool;
 
-    resource_stack primary_resources;
-
     /**
      * This function will be the first task posted to the main thread for execution.
      * It may post future tasks, but must not hang infinitely.
@@ -43,10 +42,8 @@ namespace lemon
      */
     void start()
     {
-        //resource_hold hold(primary_resources);
-        
-        // Global GLFW context is at base of stack
-        primary_resources.attach(new gl_context(4, 3, true, true));
+        auto gl = new gl_context(4, 6, true, true);
+        auto app = new application(gl);
     }
 }
 

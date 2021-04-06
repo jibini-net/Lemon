@@ -1,5 +1,7 @@
 #include "worker_thread.h"
 
+#include <chrono>
+
 #include "logger.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,8 +48,8 @@ namespace lemon
             std::unique_lock<std::mutex> execute_lock(this->execute_mutex);
             
             // Wait until the execution queue is not empty
-            if (execution_queue.size() == 0)
-                execute_condition.wait(execute_lock);
+            while (execution_queue.size() == 0)
+                execute_condition.wait_for(execute_lock, std::chrono::milliseconds(100));
 
             // Claim the queue mutex for dequeue
             if (mut_count++ == 0)
@@ -125,7 +127,8 @@ namespace lemon
 
         // Wait until notification that task is complete
         std::unique_lock<std::mutex> lock(await_mutex);
-        await_condition.wait(lock, [&]() { return complete.load(); });
+        while (!complete.load())
+            await_condition.wait_for(lock, std::chrono::milliseconds(1));
     }
 
     worker_pool::worker_pool(int num_workers)

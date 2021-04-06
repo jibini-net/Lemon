@@ -1,3 +1,7 @@
+#pragma once
+
+#include <memory>
+
 #include "context.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -12,9 +16,30 @@
 
 namespace lemon
 {
-    void context::perform(std::function<void()> task)
+    /**
+     * @brief Any context or graphical asset which can be created and destroyed.
+     */
+    class resource
     {
-        // Queue directly to worker thread
-        this->thread.execute_wait(task);
-    }
+        protected:
+            /**
+             * @brief Context which created and uses this resource.
+             */
+            std::shared_ptr<context> in_context;
+
+        public:
+            /**
+             * @brief Constructs a new resource object of some type.
+             * @param in_context The resource is linked to this context.
+             */
+            resource(context& in_context)
+            {
+                this->in_context.reset(&in_context);
+            }
+
+            /**
+             * @brief Destroys and deallocates the resource object correctly.
+             */
+            ~resource();
+    };
 }

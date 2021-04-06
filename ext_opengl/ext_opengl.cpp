@@ -18,9 +18,6 @@ namespace lemon
         bool forward_compat
     ) : context()
     {
-        // Maintain a global GLFW context (at least one must exist)
-        this->resources.attach(&this->global_glfw);
-
         log.info("Creating a new OpenGL context and pipelines ("
             + std::to_string(major)
             + "."
@@ -38,14 +35,13 @@ namespace lemon
         // Set the forward compatibility flag
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, forward_compat);
         // Enable experimental GLEW features for newer OpenGL versions
-        if (major * 10 + minor >= 33)
-            glewExperimental = true;
+        glewExperimental = major * 10 + minor >= 33;
 
         // GLFW window must be created on main thread
         main_thread.execute_wait([&]()
         {
             // Create new window handle and make current
-            this->window_handle = glfwCreateWindow(800, 600, "Lemon", NULL, NULL);
+            this->window_handle = glfwCreateWindow(1400, 900, "Lemon", NULL, NULL);
             glfwMakeContextCurrent(this->window_handle);
 
             // Initialize GLEW context bindings
@@ -78,5 +74,29 @@ namespace lemon
         {
             glfwDestroyWindow(this->window_handle);
         });
+    }
+
+    void gl_context::update()
+    {
+        this->perform([&]()
+        {
+            this->should_close |= glfwWindowShouldClose(this->window_handle);
+            glfwSwapInterval(false);
+            glfwSwapBuffers(this->window_handle);
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        });
+
+        global_glfw.poll();
+    }
+
+    bool gl_context::is_alive()
+    {
+        return !this->should_close;
+    }
+
+    void gl_context::kill()
+    {
+        this->should_close = true;
     }
 }

@@ -27,35 +27,29 @@ namespace lemon
     {
     private:
         /**
-         * @brief Resource stack local to this context's resources.
-         */
-        resource_stack resources;
-
-        /**
-         * @brief The window and context will be destroyed upon release.
-         */
-        resource_hold base_hold { resources };
-
-        /**
          * @brief Keep at least one global GLFW context alive.
          */
         glfw_context global_glfw;
 
         /**
          * @brief The GLFW window associated with this context.
-         * 
          */
         GLFWwindow* window_handle = nullptr;
 
         /**
          * @brief OpenGL-context-specific logger instance.
-         * 
          */
         logger log { "OpenGL" };
+
+        /**
+         * @brief A static flag of whether this context should close.
+         */
+        bool should_close = false;
     
     public:
         /**
          * @brief Construct a new OpenGL context with the given features.
+         * 
          * @param major Major OpenGL version (e.g., 4 for OpenGL 4.3).
          * @param minor Minor OpenGL version (e.g., 3 for OpenGL 4.3).
          * @param core Whether this is a core profile (limits legacy features).
@@ -67,6 +61,23 @@ namespace lemon
          * @brief Destroy the OpenGL context and associated window/resources.
          */
         ~gl_context();
-    };
 
+        /**
+         * @brief Updates the context, swaps the framebuffer, and polls input.
+         */
+        void update();
+
+        /**
+         * @brief Checks whether this context is currently alive.
+         * 
+         * @return true If this context is still active and alive.
+         * @return false If this context should be shut down.
+         */
+        bool is_alive();
+
+        /**
+         * @brief Marks that the context is inactive and should be shut down.
+         */
+        void kill();
+    };
 }

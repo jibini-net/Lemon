@@ -82,5 +82,26 @@ namespace lemon
              *      the context's dedicated thread.
              */
             void perform(std::function<void()> task);
+
+            /**
+             * @brief Updates the context, swaps the framebuffer, and polls input.
+             */
+            virtual void update()
+            { }
+
+            /**
+             * @brief Checks whether this context is currently alive.
+             * 
+             * @return true If this context is still active and alive.
+             * @return false If this context should be shut down.
+             */
+            virtual bool is_alive()
+            { return true; }
+
+            /**
+             * @brief Marks that the context is inactive and should be shut down.
+             */
+            virtual void kill()
+            { }
     };
 }
