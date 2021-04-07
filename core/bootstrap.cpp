@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "application.h"
+#include "logger.h"
 #include "worker_thread.h"
 
 #include "ext_opengl/ext_opengl.h"

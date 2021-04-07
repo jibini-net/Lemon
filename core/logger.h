@@ -16,8 +16,6 @@
 
 namespace lemon
 {
-	extern std::mutex* global_log_mutex;
-
 	/**
 	 * A rudimentary logger which provides various levels of severity for logged
 	 * messages. This class provides a partial and very rudimentary implementation
@@ -41,11 +39,6 @@ namespace lemon
 		 * @brief Pattern for formatting messages logged by this instance.
 		 */
 		std::string pattern;
-
-		/**
-		 * @brief A globally shared mutex with which to synchronize logging.
-		 */
-		static std::mutex global_log_mutex;
 
 	public:
 		/**

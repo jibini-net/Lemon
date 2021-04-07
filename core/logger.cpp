@@ -20,8 +20,6 @@
 
 namespace lemon
 {
-	std::mutex logger::global_log_mutex;
-
 	logger::logger(std::string pattern, std::string name)
 	{
 		this->pattern = pattern;
@@ -51,7 +49,8 @@ namespace lemon
 	void logger::log(std::string level, std::string level_color, std::string message)
 	{
 		// Lock mutex in order to synchronize logging
-		std::lock_guard<std::mutex> lock(global_log_mutex);
+		static std::mutex log_mutex;
+		std::lock_guard<std::mutex> lock(log_mutex);
 
 		// Convert to C strings and capture time
 		auto pattern_c = pattern.c_str();

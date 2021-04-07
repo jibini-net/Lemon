@@ -66,6 +66,8 @@ namespace lemon
                 {
                     auto error = ex.what();
                     log.error(error);
+
+                    throw std::runtime_error("A fatal error has occurred");
                 }
 
                 // Remove the executed task from the queue
@@ -97,8 +99,8 @@ namespace lemon
         }
 
         // Claim the queue mutex for enqueue
-            if (mut_count++ == 0)
-                this->queue_mutex.lock();
+        if (mut_count++ == 0)
+            this->queue_mutex.lock();
 
         // Queue the provided task
         this->execution_queue.push_back(task);
@@ -116,7 +118,7 @@ namespace lemon
         std::atomic_bool complete(false);
 
         // Wrap the task with synchronization operations
-        execute([&]()
+        execute([=, &complete]()
         {
             task();
             
