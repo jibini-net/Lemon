@@ -44,7 +44,7 @@ namespace lemon
             access = GL_WRITE_ONLY;
         else
         {
-            this->log.warn("Attempted to map a buffer with neither read nor write enabled");
+            this->log.error("Attempted to map a buffer with neither read nor write enabled");
             return nullptr;
         }
 
@@ -74,7 +74,7 @@ namespace lemon
         {
             glBindBuffer(buffer_type, pointer);
             glBufferData(buffer_type, size, data, buffer_usage);
-            
+
             glBindBufferBase(buffer_type, index, pointer);
         });
     }
