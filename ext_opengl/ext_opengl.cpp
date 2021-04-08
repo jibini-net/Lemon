@@ -25,21 +25,21 @@ namespace lemon
             + (core ? " core" : "")
             + ")");
 
-        glfwDefaultWindowHints();
-        // Set the context version
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
-        // Set the core flag (limits legacy features)
-        if (core)
-            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        // Set the forward compatibility flag
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, forward_compat);
-        // Enable experimental GLEW features for newer OpenGL versions
-        glewExperimental = major * 10 + minor >= 33;
-
         // GLFW window must be created on main thread
         main_thread.execute_wait([&]()
         {
+            glfwDefaultWindowHints();
+            // Set the context version
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
+            // Set the core flag (limits legacy features)
+            if (core)
+                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+            // Set the forward compatibility flag
+            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, forward_compat);
+            // Enable experimental GLEW features for newer OpenGL versions
+            glewExperimental = major * 10 + minor >= 33;
+
             // Create new window handle and make current
             this->window_handle = glfwCreateWindow(1400, 900, "Lemon", NULL, NULL);
             glfwMakeContextCurrent(this->window_handle);
@@ -80,7 +80,7 @@ namespace lemon
     {
         this->perform([&]()
         {
-            this->should_close |= glfwWindowShouldClose(this->window_handle);
+            this->should_close |= (bool)glfwWindowShouldClose(this->window_handle);
             glfwSwapInterval(false);
             glfwSwapBuffers(this->window_handle);
 

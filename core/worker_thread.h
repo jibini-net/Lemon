@@ -2,12 +2,12 @@
 
 #include <atomic>
 #include <condition_variable>
-#include <deque>
 #include <functional>
 #include <mutex>
 #include <thread>
 
 #include "logger.h"
+#include "deque.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -37,13 +37,6 @@ namespace lemon
      * flag to start a new thread.  If the thread start flag is set, a new
      * thread will be spawned upon construction of a new worker thread.
      * 
-     * This class relies on the usage of STL deques and threads.  The STL deque
-     * is not inherently thread-safe, so any implementation of this class must
-     * provide adequate synchronization for addition and execution of the task
-     * queue.  Execution of the queue should execute the entirety of the queue,
-     * leaving it empty.  Synchronization is undefined for whether tasks may be
-     * added to the queue mid-execution. 
-     * 
      * @brief Parks a thread and allows queuing of tasks for execution.
      * @author Zach Goethel
      */
@@ -62,7 +55,7 @@ namespace lemon
          * 
          * @brief Task queue for this worker thread.
          */
-        std::deque<std::function<void()>> execution_queue;
+        deque<std::function<void()>> execution_queue;
 
         /**
          * @brief Stores which thread on which this worker is operating.
@@ -82,13 +75,6 @@ namespace lemon
         /**
          * Synchronization mutex for accessing the execution queue, locking 
          * while reading from and writing to the queue.
-         * 
-         * This class relies on the usage of STL deques and threads.  The STL
-         * deque is not inherently thread-safe, so any implementation of this
-         * class must provide adequate synchronization for addition and
-         * execution of the task queue.  Execution of the queue should execute
-         * the entirety of the queue, leaving it empty.  Synchronization is
-         * undefined for whether tasks may be added to the queue mid-execution. 
          * 
          * @brief Synchronization for accessing the execution queue.
          */

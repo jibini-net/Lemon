@@ -61,17 +61,12 @@ namespace lemon
                 try
                 {
                     // Execute each queued task, first-in first-out
-                    this->execution_queue.front()();
+                    this->execution_queue.poll()();
                 } catch(const std::exception& ex)
                 {
                     auto error = ex.what();
                     log.error(error);
-
-                    throw std::runtime_error("A fatal error has occurred");
                 }
-
-                // Remove the executed task from the queue
-                this->execution_queue.pop_front();
             }
 
             // Unlock when this thread gives up mutex
@@ -103,7 +98,7 @@ namespace lemon
             this->queue_mutex.lock();
 
         // Queue the provided task
-        this->execution_queue.push_back(task);
+        this->execution_queue.add(task);
         // Notify the execution thread that the queue has a task
         this->execute_condition.notify_all();
 
