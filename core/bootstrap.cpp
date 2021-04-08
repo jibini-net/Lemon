@@ -8,6 +8,7 @@
 #include "worker_thread.h"
 
 #include "ext_opengl/ext_opengl.h"
+#include "ext_opengl/gl_ssbo.h"
 #include "ext_glfw/ext_glfw.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -30,6 +31,11 @@ namespace lemon
     worker_thread main_thread(false);
     worker_pool primary_pool;
 
+    struct test_t
+    {
+        int val;
+    };
+
     /**
      * This function will be the first task posted to the main thread for execution.
      * It may post future tasks, but must not hang infinitely.
@@ -44,7 +50,17 @@ namespace lemon
     void start()
     {
         auto gl = new gl_context(4, 6, true, true);
-        auto app = new application(gl);
+
+        auto buffer = new gl_ssbo(gl, 0);
+        buffer->put(new test_t, sizeof(test_t));
+
+        auto app = new application(gl, [=]()
+        {
+            buffer->map_scoped<test_t>(true, false, [&](auto mapped)
+            {
+                
+            });
+        });
     }
 }
 

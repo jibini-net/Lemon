@@ -54,14 +54,21 @@ namespace lemon
              */
             resource_hold* base_hold = new resource_hold { this->resources };
 
+            /**
+             * @brief A function which is invoked for every frame.
+             */
+            std::function<void()> loop;
+
         public:
             template <class T>
-            application(T* app_context)
+            application(T* app_context, std::function<void()> loop)
             {
                 // Maintain a reference to the context
                 this->app_context = app_context;
                 // Register the context for deletion
                 this->resources.attach(app_context);
+
+                this->loop = loop;
 
                 // Start the application on the dedicated thread
                 log.debug("Starting application on dedicated thread");

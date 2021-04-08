@@ -53,6 +53,9 @@ target_link_libraries (LemonExt_GLFW LemonCore)
 add_library (LemonExt_OpenGL STATIC
     "ext_opengl/ext_opengl.h"
     "ext_opengl/ext_opengl.cpp"
+
+    "ext_opengl/gl_ssbo.h"
+    "ext_opengl/gl_ssbo.cpp"
     )
 # OpenGL extension requires core library
 target_link_libraries (LemonExt_OpenGL LemonCore)

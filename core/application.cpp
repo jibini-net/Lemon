@@ -1,6 +1,8 @@
 #include "application.h"
 
 #include <time.h>
+#include <chrono>
+#include <math.h>
 
 #include "resource_stack.h"
 
@@ -14,30 +16,85 @@
 //  ------------------------------------------------------------------------  //
 ////////////////////////////////////////////////////////////////////////////////
 
+typedef std::chrono::high_resolution_clock high_res;
+typedef std::chrono::seconds sec;
+typedef std::chrono::nanoseconds nano;
+
+#define STD_DEV_WARNING 3.4
+
+#define delta_sec(e, s) std::chrono::duration_cast<sec>(e - s).count()
+#define delta_nano(e, s) std::chrono::duration_cast<nano>(e - s).count()
+
 namespace lemon
 {
     void application::start()
     {
-        time_t last_update = time(NULL);
+        auto last_update = high_res::now();
         int frame_count = 0;
-        float update_time = 5.0;
+        int update_time = 5;
+
+        auto last_time = last_update;
+        double max = -1.0, min = -1.0;
+
+        double mean = 0.0, mean2 = 0.0;
+        double variance = 0.0;
 
         while (this->app_context->is_alive())
         {
-            // Run each frame
+            try
+            {
+                // Run each frame
+                this->loop();
+            } catch(const std::exception& ex)
+            {
+                auto error = ex.what();
+                log.error(error);
+            }
 
             this->app_context->update();
 
-            frame_count++;
-            auto time = std::time(NULL);
+            {   /* FRAME COUNTING */
+                frame_count++;
+                auto time = high_res::now();
 
-            if (difftime(time, last_update) >= update_time)
-            {
-                float rate = (float)frame_count / update_time;
-                this->log.debug(std::to_string(rate) + " fps");
+                int frame_time = delta_nano(time, last_time);
+                double frames = 1000000000.0 / frame_time;
 
-                last_update = time;
-                frame_count = 0;
+                if (frames > max || max == -1.0)
+                    max = frames;
+                if (frames < min || min == -1.0)
+                    min = frames;
+
+                last_time = time;
+
+                /* STANDARD DEVIATION */
+                double delta = frames - mean;
+                mean += delta / frame_count;
+                mean2 += delta * (frames - mean);
+                variance = mean2 / frame_count;
+
+                /* LOG OUTPUT */
+                if (delta_sec(time, last_update) >= update_time)
+                {
+                    float rate = (float)frame_count / update_time;
+                    double percent_dev = sqrt(variance) / rate * 100;
+
+                    this->log.debug(std::to_string((int)rate) + " +/- "
+                        + std::to_string(percent_dev) + "% fps"
+                        + " (\033[1;31m" + std::to_string((int)min) + "\033[0m"
+                        + ", \033[1;32m" + std::to_string((int)max) + "\033[0m"
+                        + ")");
+                    if (percent_dev >= STD_DEV_WARNING)
+                        this->log.warn("Abnormal variation in frametimes detected; "
+                             + std::to_string(percent_dev)
+                             + "% is above the warning threshold");
+
+                    last_update = time;
+                    frame_count = 0;
+
+                    max = min = -1.0f;
+                    mean = mean2 = variance = 0.0;
+                }
             }
         }
 
