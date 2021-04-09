@@ -50,6 +50,7 @@ namespace lemon
             this->condition.notify_all();
         
         this->count++;
+        this->condition.notify_all();
 
         this->mutex.unlock();
     }
