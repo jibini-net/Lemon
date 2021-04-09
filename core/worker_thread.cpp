@@ -1,6 +1,7 @@
 #include "worker_thread.h"
 
 #include <chrono>
+#include <thread>
 
 #include "logger.h"
 
@@ -16,9 +17,6 @@
 
 namespace lemon
 {
-    // Counter to avoid hardlock on a given thread
-    thread_local int mut_count = 0;
-
     // Synchronization objects for awaiting task execution
     thread_local std::mutex await_mutex;
     // Conditional variable for awaiting task execution
@@ -44,38 +42,43 @@ namespace lemon
         // Loop until the park flag is disabled (likely infinite)
         while (is_parked)
         {
-            // Claim the execution mutex for waiting
-            std::unique_lock<std::mutex> execute_lock(this->execute_mutex);
-            
-            // Wait until the execution queue is not empty
             while (execution_queue.size() == 0)
-                execute_condition.wait_for(execute_lock, std::chrono::milliseconds(100));
-
-            // Claim the queue mutex for dequeue
-            if (mut_count++ == 0)
-                this->queue_mutex.lock();
+            {
+                std::unique_lock<std::mutex> lock(this->execute_mutex);
+                if (execution_queue.size() == 0)
+                    this->execute_condition.wait(lock);
+            }
 
             // Iterate over the entire queue until empty
-            while (this->execution_queue.size() > 0)
+            this->execution_queue.consume([&](auto action)
             {
-                try
+                 try
                 {
                     // Execute each queued task, first-in first-out
-                    this->execution_queue.poll()();
+                    action();
                 } catch(const std::exception& ex)
                 {
                     auto error = ex.what();
                     log.error(error);
                 }
-            }
-
-            // Unlock when this thread gives up mutex
-            if (--mut_count == 0)
-                this->queue_mutex.unlock();
+            });
         }
     }
 
     void worker_thread::execute(std::function<void()> task)
+    {
+        while (!execute_mutex.try_lock())
+            execute_condition.notify_all();
+
+        // std::lock_guard<std::mutex> lock(this->execute_mutex);
+        // Queue the provided task
+        this->execution_queue.add(task);
+        execute_condition.notify_all();
+
+        execute_mutex.unlock();
+    }
+
+    void worker_thread::execute_wait(std::function<void()> task)
     {
         // Protection for a thread queueing onto itself
         if (std::this_thread::get_id() == this->thread_id)
@@ -93,39 +96,30 @@ namespace lemon
             return;
         }
 
-        // Claim the queue mutex for enqueue
-        if (mut_count++ == 0)
-            this->queue_mutex.lock();
-
-        // Queue the provided task
-        this->execution_queue.add(task);
-        // Notify the execution thread that the queue has a task
-        this->execute_condition.notify_all();
-
-        // Unlock when this thread gives up mutex
-        if (--mut_count == 0)
-            this->queue_mutex.unlock();
-    }
-
-    void worker_thread::execute_wait(std::function<void()> task)
-    {
         // Latched state to avoid hardlock
         std::atomic_bool complete(false);
 
         // Wrap the task with synchronization operations
-        execute([=, &complete]()
+        execute([&]()
         {
             task();
             
             // Notify waiting thread that task is complete
+            while (!await_mutex.try_lock())
+                await_condition.notify_all();
+
             complete = true;
-            await_condition.notify_all();
+
+            await_mutex.unlock();
         });
 
-        // Wait until notification that task is complete
-        std::unique_lock<std::mutex> lock(await_mutex);
-        while (!complete.load())
-            await_condition.wait_for(lock, std::chrono::milliseconds(1));
+        while (!complete.load());
+        {
+            // Wait until notification that task is complete
+            std::unique_lock<std::mutex> lock(await_mutex);
+            if (!complete.load())
+                await_condition.wait(lock);
+        }
     }
 
     worker_pool::worker_pool(int num_workers)

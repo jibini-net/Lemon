@@ -50,21 +50,18 @@ namespace lemon
      */
     void start()
     {
-        auto gl = new gl_context(4, 6, true, true);
-        auto buffer = new gl_ssbo(gl, 0);
+        static auto gl = new gl_context(4, 6, true, true);
+        static auto buffer = new gl_ssbo(gl, 0);
 
         buffer->put(new test_t, sizeof(test_t));
 
-        auto app = new application(gl, [=]()
+        auto app = new application(gl, [&]()
         {
-            int i = 0, j;
-            for (i; i < 500000; i++)
-                j = sqrt(5);
-
-            buffer->map_scoped<test_t>(true, false, [&](auto mapped)
-            {
-                
-            });
+            for (int i = 0; i < 24; i++)
+                buffer->map_scoped<test_t>(true, false, [&](auto mapped)
+                {
+                    mapped->val++;
+                });
         });
     }
 }

@@ -17,6 +17,8 @@ namespace lemon
 
     glfw_context::glfw_context() : context()
     {
+        static worker_thread polling(true);
+
         // GLFW operations must be executed on the main thread
         // Operation will hang until executed
         main_thread.execute_wait([&]()
@@ -29,6 +31,15 @@ namespace lemon
                     throw std::runtime_error("Could not initialize GLFW windowing library");
                 
                 this->log.info("Initialized global GLFW context");
+
+                polling.execute([&]()
+                {
+                    while (context_count > 0)
+                        main_thread.execute_wait([&]()
+                        {
+                            glfwWaitEventsTimeout(0.01);
+                        });
+                });
             }
         });
     }

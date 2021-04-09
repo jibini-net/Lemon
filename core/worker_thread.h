@@ -73,14 +73,6 @@ namespace lemon
         bool is_parked = false;
 
         /**
-         * Synchronization mutex for accessing the execution queue, locking 
-         * while reading from and writing to the queue.
-         * 
-         * @brief Synchronization for accessing the execution queue.
-         */
-        std::mutex queue_mutex;
-
-        /**
          * Synchronization which allows the worker thread to wait and be
          * notified once a new task is enqueued in the task queue.  This allows
          * threads to sleep rather than infinitely poll the queue and waste CPU

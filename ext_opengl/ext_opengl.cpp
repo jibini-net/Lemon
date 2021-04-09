@@ -86,8 +86,6 @@ namespace lemon
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         });
-
-        global_glfw.poll();
     }
 
     bool gl_context::is_alive()

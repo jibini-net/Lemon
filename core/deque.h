@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mutex>
+
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
 //                    COPYRIGHT (c) 2021 by ZACH GOETHEL                      //
@@ -44,12 +46,10 @@ namespace lemon
             deque_node<T>* head = new deque_node<T>;
             deque_node<T>* last = head;
 
-        public:
-            /**
-             * @brief Appends the provided element to the queue.
-             * @param element Element to append to the queue.
-             */
-            void add(T element)
+            std::mutex mutex;
+        
+        private:
+            void _add(T element)
             {
                 last->next = new deque_node<T>;
                 last = last->next;
@@ -58,11 +58,7 @@ namespace lemon
                 this->len++;
             }
 
-            /**
-             * @brief Pushes the provided element onto the stack.
-             * @param element Element to push onto the stack.
-             */
-            void push(T element)
+            void _push(T element)
             {
                 T* n = head->next;
                 head->next = new deque_node<T>;
@@ -72,11 +68,7 @@ namespace lemon
                 this->len++;
             }
 
-            /**
-             * @brief Polls and removes the first element of the queue.
-             * @return The removed front element of the queue.
-             */
-            T poll()
+            T _poll()
             {
                 T val = head->next->data;
                 auto d = head->next;
@@ -88,6 +80,40 @@ namespace lemon
                     last = head;
 
                 return val;
+            }
+
+        public:
+            /**
+             * @brief Appends the provided element to the queue.
+             * @param element Element to append to the queue.
+             */
+            void add(T element)
+            {
+                std::lock_guard<std::mutex> lock(this->mutex);
+
+                this->_add(element);
+            }
+
+            /**
+             * @brief Pushes the provided element onto the stack.
+             * @param element Element to push onto the stack.
+             */
+            void push(T element)
+            {
+                std::lock_guard<std::mutex> lock(this->mutex);
+
+                this->_push(element);
+            }
+
+            /**
+             * @brief Polls and removes the first element of the queue.
+             * @return The removed front element of the queue.
+             */
+            T poll()
+            {
+                std::lock_guard<std::mutex> lock(this->mutex);
+                
+                return this->_poll();
             }
 
             /**
@@ -105,7 +131,17 @@ namespace lemon
              */
             int size()
             {
+                std::lock_guard<std::mutex> lock(this->mutex);
+
                 return this->len;
+            }
+
+            void consume(std::function<void(T)> consumer)
+            {
+                std::lock_guard<std::mutex> lock(this->mutex);
+
+                while (len > 0)
+                    consumer(this->_poll());
             }
     };
 }
