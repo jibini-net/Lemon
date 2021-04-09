@@ -12,9 +12,8 @@
 
 namespace lemon
 {
-    gl_ssbo::gl_ssbo(context* in_context, int index) : shader_buffer()
+    gl_ssbo::gl_ssbo(context& in_context, int index) : shader_buffer(in_context)
     {
-        this->in_context = in_context;
         this->index = index;
 
         this->in_context->perform([&]()

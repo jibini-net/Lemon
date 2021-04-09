@@ -75,5 +75,5 @@ uniform sampler2D texture;
 void main()
 {
     // Set the output fragment to a modulated sampled color
-    color = diffuse * texture(texture, texture_coord);
+    color = diffuse * texture2D(texture, texture_coord);
 }

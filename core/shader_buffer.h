@@ -2,6 +2,9 @@
 
 #include <functional>
 
+#include "logger.h"
+#include "resource.h"
+
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
 //                    COPYRIGHT (c) 2021 by ZACH GOETHEL                      //
@@ -18,12 +21,18 @@ namespace lemon
      * @brief A shared buffer between video and main memory which can be mapped.
      * @author Zach Goethel
      */
-    class shader_buffer
+    class shader_buffer : public resource
     {
     protected:
         logger log { "Shader Data"};
 
     public:
+        shader_buffer(context& in_context) : resource(in_context)
+        { }
+
+        ~shader_buffer()
+        { }
+
         virtual void* map(bool read, bool write)
         { return nullptr; }
 

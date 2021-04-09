@@ -61,12 +61,12 @@ namespace lemon
 
         public:
             template <class T>
-            application(T* app_context, std::function<void()> loop)
+            application(T& app_context, std::function<void()> loop)
             {
                 // Maintain a reference to the context
-                this->app_context = app_context;
+                this->app_context = &app_context;
                 // Register the context for deletion
-                this->resources.attach(app_context);
+                this->resources.attach(&app_context);
 
                 this->loop = loop;
 

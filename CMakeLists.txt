@@ -25,11 +25,22 @@ add_library (LemonCore STATIC
     "core/resource_stack.h"
     "core/resource_stack.cpp"
     "core/resource.h"
+    "core/resource.cpp"
     "core/application.h"
     "core/application.cpp"
     "core/context.h"
     "core/context.cpp"
+
+    "core/shader_buffer.h"
+    "core/shader_program.h"
     )
+# Copy resource files to build output directory
+add_custom_target (ShaderResources ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/shaders
+    ${CMAKE_BINARY_DIR}/shaders
+)
+add_dependencies (LemonCore ShaderResources)
 
 # Linux build requires linking of thread libraries
 if (UNIX)
@@ -58,6 +69,8 @@ add_library (LemonExt_OpenGL STATIC
 
     "ext_opengl/gl_ssbo.h"
     "ext_opengl/gl_ssbo.cpp"
+    "ext_opengl/gl_program.h"
+    "ext_opengl/gl_program.cpp"
     )
 # OpenGL extension requires core library
 target_link_libraries (LemonExt_OpenGL LemonCore)

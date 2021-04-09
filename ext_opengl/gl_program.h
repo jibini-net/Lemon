@@ -2,7 +2,7 @@
 
 #include "ext_opengl.h"
 
-#include "core/shader_buffer.h"
+#include "core/shader_program.h"
 #include "core/context.h"
 #include "ext_glfw/ext_glfw.h"
 
@@ -18,26 +18,20 @@
 
 namespace lemon
 {
-    class gl_ssbo : public shader_buffer
+    class gl_program : public shader_program
     {
         protected:
             GLuint pointer;
 
-            int index;
+            void _attach(GLenum type, std::string source, std::string name);
 
-            GLenum buffer_type = GL_SHADER_STORAGE_BUFFER;
+            void _link();
 
-            GLenum buffer_usage = GL_DYNAMIC_COPY;
+            void _use();
 
         public:
-            gl_ssbo(context& in_context, int index);
+            gl_program(context& in_context, std::string src_vert, std::string src_frag);
 
-            ~gl_ssbo();
-
-            void* map(bool read, bool write);
-
-            void unmap();
-
-            void put(void* data, int size);
+            ~gl_program();
     };
 }

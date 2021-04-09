@@ -1,10 +1,9 @@
 #pragma once
 
-#include "ext_opengl.h"
+#include <string>
 
-#include "core/shader_buffer.h"
-#include "core/context.h"
-#include "ext_glfw/ext_glfw.h"
+#include "logger.h"
+#include "resource.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -18,26 +17,16 @@
 
 namespace lemon
 {
-    class gl_ssbo : public shader_buffer
+    class shader_program : public resource
     {
-        protected:
-            GLuint pointer;
+    protected:
+        logger log { "Shader Program" };
 
-            int index;
+    public:
+        shader_program(context& in_context) : resource(in_context)
+        { }
 
-            GLenum buffer_type = GL_SHADER_STORAGE_BUFFER;
-
-            GLenum buffer_usage = GL_DYNAMIC_COPY;
-
-        public:
-            gl_ssbo(context& in_context, int index);
-
-            ~gl_ssbo();
-
-            void* map(bool read, bool write);
-
-            void unmap();
-
-            void put(void* data, int size);
+        ~shader_program()
+        { }
     };
 }

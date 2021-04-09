@@ -1,6 +1,9 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <iostream>
+#include <fstream>
 
 #include "context.h"
 
@@ -40,6 +43,9 @@ namespace lemon
             /**
              * @brief Destroys and deallocates the resource object correctly.
              */
-            ~resource();
+            ~resource()
+            { }
     };
+
+    std::string read_file(std::string path);
 }

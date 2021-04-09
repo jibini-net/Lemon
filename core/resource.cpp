@@ -1,10 +1,4 @@
-#pragma once
-
-#include "ext_opengl.h"
-
-#include "core/shader_buffer.h"
-#include "core/context.h"
-#include "ext_glfw/ext_glfw.h"
+#include "resource.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -18,26 +12,19 @@
 
 namespace lemon
 {
-    class gl_ssbo : public shader_buffer
+    std::string read_file(std::string path)
     {
-        protected:
-            GLuint pointer;
+        std::string line, build = "";
+        std::ifstream input(path);
 
-            int index;
-
-            GLenum buffer_type = GL_SHADER_STORAGE_BUFFER;
-
-            GLenum buffer_usage = GL_DYNAMIC_COPY;
-
-        public:
-            gl_ssbo(context& in_context, int index);
-
-            ~gl_ssbo();
-
-            void* map(bool read, bool write);
-
-            void unmap();
-
-            void put(void* data, int size);
-    };
+        if (input.is_open())
+        {
+            while (getline(input, line))
+                build += line + "\n";
+            input.close();
+            
+            return build;
+        } else
+            throw std::runtime_error("Could not open requested file ('" + path + "')");
+    }
 }

@@ -7,9 +7,11 @@
 #include "application.h"
 #include "logger.h"
 #include "worker_thread.h"
+#include "resource.h"
 
 #include "ext_opengl/ext_opengl.h"
 #include "ext_opengl/gl_ssbo.h"
+#include "ext_opengl/gl_program.h"
 #include "ext_glfw/ext_glfw.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -50,21 +52,18 @@ namespace lemon
      */
     void start()
     {
-        static auto gl = new gl_context(4, 6, true, true);
-        static auto buffer = new gl_ssbo(gl, 0);
+        auto src_vert = read_file("shaders/default.vert");
+        auto src_frag = read_file("shaders/default.frag");
 
-        buffer->put(new test_t, sizeof(test_t));
+        static gl_context gl(4, 6, true, true);
+        static gl_ssbo buffer(gl, 0);
+        static gl_program shader(gl, src_vert, src_frag);
 
-        auto app = new application(gl, [&]()
+        buffer.put(new test_t, sizeof(test_t));
+
+        static application app(gl, [&]()
         {
-            buffer->map_scoped<test_t>(true, false, [&](auto mapped)
-            {
-                
-            });
-
-            int i = 0, j;
-            for (i; i < 200000; i++)
-                j = (int)sqrt(5.0f);
+            
         });
     }
 }
