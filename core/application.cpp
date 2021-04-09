@@ -41,7 +41,6 @@ namespace lemon
 
         while (this->app_context->is_alive())
         {
-            auto s = high_res::now();
             try
             {
                 // Run each frame
@@ -51,13 +50,8 @@ namespace lemon
                 auto error = ex.what();
                 log.error(error);
             }
-            auto e = high_res::now();
-            int ms0 = (int)delta_nano(e, s) / 1000000;
 
-            s = high_res::now();
             this->app_context->update();
-            e = high_res::now();
-            int ms1 = (int)delta_nano(e, s) / 1000000;
 
             {   /* FRAME COUNTING */
                 frame_count++;
@@ -70,14 +64,6 @@ namespace lemon
                     max = frames;
                 if (frames < min || min == -1.0)
                     min = frames;
-
-                if (frames < 60)
-                {
-                    log.debug("Problem Frame " + std::to_string(frame_time / 1000000) + "ms");
-                    log.debug("Regions took "
-                         + std::to_string(ms0) + "ms/"
-                         + std::to_string(ms1) + "ms");
-                }
 
                 last_time = time;
 

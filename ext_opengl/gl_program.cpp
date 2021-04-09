@@ -22,6 +22,7 @@ namespace lemon
             this->_attach(GL_VERTEX_SHADER, src_vert, "Vertex");
             this->_attach(GL_FRAGMENT_SHADER, src_frag, "Fragment");
             this->_link();
+            this->_use();
         });
     }
 

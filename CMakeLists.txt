@@ -33,6 +33,7 @@ add_library (LemonCore STATIC
 
     "core/shader_buffer.h"
     "core/shader_program.h"
+    "core/static_mesh.h"
     )
 # Copy resource files to build output directory
 add_custom_target (ShaderResources ALL

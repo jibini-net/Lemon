@@ -8,6 +8,7 @@
 #include "logger.h"
 #include "worker_thread.h"
 #include "resource.h"
+#include "static_mesh.h"
 
 #include "ext_opengl/ext_opengl.h"
 #include "ext_opengl/gl_ssbo.h"
@@ -34,11 +35,6 @@ namespace lemon
     worker_thread main_thread(false);
     worker_pool primary_pool;
 
-    struct test_t
-    {
-        int val;
-    };
-
     /**
      * This function will be the first task posted to the main thread for execution.
      * It may post future tasks, but must not hang infinitely.
@@ -56,14 +52,57 @@ namespace lemon
         auto src_frag = read_file("shaders/default.frag");
 
         static gl_context gl(4, 6, true, true);
+
+        gl.perform([&]()
+        {
+            GLuint vertex_array;
+            glGenVertexArrays(1, &vertex_array);
+            glBindVertexArray(vertex_array);
+        });
+
         static gl_ssbo buffer(gl, 0);
         static gl_program shader(gl, src_vert, src_frag);
 
-        buffer.put(new test_t, sizeof(test_t));
+        render_data r;
+
+        {   /* MEMORY BUFFER INTIALIZATION */
+            r.num_vertices = 3;
+
+            r.vertices[0] = 
+            {
+                /* VERT */ { -1, -1,  0,  1  },
+                /* DIFF */ {  1,  0,  0,  1  },
+                /* NORM */ {  0,  0,  0  },     { -1 },
+                /* TEXC */ {  0,  1  },         {-1, -1 }
+            };
+
+            r.vertices[1] = 
+            {
+                /* VERT */ {  1, -1,  0,  1  },
+                /* DIFF */ {  0,  1,  0,  1  },
+                /* NORM */ {  0,  0,  0  },     { -1 },
+                /* TEXC */ {  1,  1  },         {-1, -1 }
+            };
+
+            r.vertices[2] = 
+            {
+                /* VERT */ {  0,  1,  0,  1  },
+                /* DIFF */ {  0,  0,  1,  1  },
+                /* NORM */ {  0,  0,  0  },     { -1 },
+                /* TEXC */ {  1,  0  },         {-1, -1 }
+            };
+
+            buffer.put(&r, sizeof(r));
+        }
 
         static application app(gl, [&]()
         {
-            
+            gl.perform([&]()
+            {
+                glViewport(0, 0, 1400, 900);
+
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+            });
         });
     }
 }

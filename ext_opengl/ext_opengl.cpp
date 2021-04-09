@@ -12,6 +12,17 @@
 
 namespace lemon
 {
+    void GLAPIENTRY _gl_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
+                    GLsizei length, const GLchar* message, const void* userParam )
+    {
+        static logger log("OpenGL Callback");
+        
+        if (type == GL_DEBUG_TYPE_ERROR)
+            log.error(message);
+        else
+            log.debug(message);
+    }
+
     gl_context::gl_context(
         int major, int minor,
         bool core,
@@ -62,6 +73,9 @@ namespace lemon
         this->perform([=]()
         {
             glfwMakeContextCurrent(this->window_handle);
+
+            glEnable(GL_DEBUG_OUTPUT);
+            glDebugMessageCallback(_gl_message_callback, 0);
         });
     }
 
@@ -80,11 +94,13 @@ namespace lemon
     {
         this->perform([&]()
         {
+            glFlush();
+
             this->should_close |= (bool)glfwWindowShouldClose(this->window_handle);
             glfwSwapInterval(false);
             glfwSwapBuffers(this->window_handle);
 
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT);
         });
     }
 
