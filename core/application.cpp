@@ -20,7 +20,7 @@ typedef std::chrono::high_resolution_clock high_res;
 typedef std::chrono::seconds sec;
 typedef std::chrono::nanoseconds nano;
 
-#define STD_DEV_WARNING 5.0
+#define STD_DEV_WARNING 17.0
 
 #define delta_sec(e, s) std::chrono::duration_cast<sec>(e - s).count()
 #define delta_nano(e, s) std::chrono::duration_cast<nano>(e - s).count()

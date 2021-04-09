@@ -57,11 +57,14 @@ namespace lemon
 
         auto app = new application(gl, [&]()
         {
-            for (int i = 0; i < 24; i++)
-                buffer->map_scoped<test_t>(true, false, [&](auto mapped)
-                {
-                    mapped->val++;
-                });
+            buffer->map_scoped<test_t>(true, false, [&](auto mapped)
+            {
+                
+            });
+
+            int i = 0, j;
+            for (i; i < 200000; i++)
+                j = (int)sqrt(5.0f);
         });
     }
 }

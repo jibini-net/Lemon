@@ -1,9 +1,9 @@
 #include "worker_thread.h"
 
 #include <chrono>
-#include <thread>
 
 #include "logger.h"
+#include "latch.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -96,30 +96,17 @@ namespace lemon
             return;
         }
 
-        // Latched state to avoid hardlock
-        std::atomic_bool complete(false);
+        latch l(1);
 
         // Wrap the task with synchronization operations
         execute([&]()
         {
             task();
-            
-            // Notify waiting thread that task is complete
-            while (!await_mutex.try_lock())
-                await_condition.notify_all();
 
-            complete = true;
-
-            await_mutex.unlock();
+            l.count_down();
         });
 
-        while (!complete.load());
-        {
-            // Wait until notification that task is complete
-            std::unique_lock<std::mutex> lock(await_mutex);
-            if (!complete.load())
-                await_condition.wait(lock);
-        }
+        l.wait();
     }
 
     worker_pool::worker_pool(int num_workers)

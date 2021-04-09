@@ -1,5 +1,7 @@
 #include "latch.h"
 
+#include "logger.h"
+
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
 //                    COPYRIGHT (c) 2021 by ZACH GOETHEL                      //
@@ -19,10 +21,11 @@ namespace lemon
 
     void latch::wait()
     {
-        while (this->count == 0)
+        while (this->count > 0)
         {
             std::unique_lock<std::mutex> lock(this->mutex);
-            if (this->count == 0)
+        
+            if (this->count > 0)
                 this->condition.wait(lock);
         }
     }
@@ -35,6 +38,7 @@ namespace lemon
                 this->condition.notify_all();
             
             this->count--;
+            this->condition.notify_all();
 
             this->mutex.unlock();
         }
