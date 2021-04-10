@@ -35,10 +35,14 @@ namespace lemon
                 polling.execute([&]()
                 {
                     while (context_count > 0)
+                    {
                         main_thread.execute_wait([&]()
                         {
-                            glfwWaitEventsTimeout(0.01);
+                            glfwPollEvents();
                         });
+
+                        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                    }
                 });
             }
         });

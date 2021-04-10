@@ -50,6 +50,7 @@ namespace lemon
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, forward_compat);
             // Enable experimental GLEW features for newer OpenGL versions
             glewExperimental = major * 10 + minor >= 33;
+            glfwWindowHint(GLFW_SAMPLES, 16);
 
             // Create new window handle and make current
             this->window_handle = glfwCreateWindow(1400, 900, "Lemon", NULL, NULL);

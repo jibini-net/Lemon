@@ -9,6 +9,12 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR})
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR})
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 #
 # Register Lemon core and extension libraries
 #
@@ -42,6 +48,13 @@ add_custom_target (ShaderResources ALL
     ${CMAKE_BINARY_DIR}/shaders
 )
 add_dependencies (LemonCore ShaderResources)
+
+add_custom_target (ModelResources ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/models
+    ${CMAKE_BINARY_DIR}/models
+)
+add_dependencies (LemonCore ModelResources)
 
 # Linux build requires linking of thread libraries
 if (UNIX)

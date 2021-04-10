@@ -39,5 +39,7 @@ namespace lemon
             void unmap();
 
             void put(void* data, int size);
+
+            void bind_base();
     };
 }

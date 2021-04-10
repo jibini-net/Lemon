@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <functional>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -47,5 +48,5 @@ namespace lemon
             { }
     };
 
-    std::string read_file(std::string path);
+    std::string read_file(std::string path, bool aggregate = true, std::function<void(std::string)> per_line = [=](auto s) { });
 }

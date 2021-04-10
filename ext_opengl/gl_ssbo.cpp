@@ -77,4 +77,12 @@ namespace lemon
             glBindBufferBase(buffer_type, index, pointer);
         });
     }
+
+    void gl_ssbo::bind_base()
+    {
+        this->in_context->perform([&]()
+        {
+            glBindBufferBase(buffer_type, index, pointer);
+        });
+    }
 }

@@ -4,7 +4,6 @@
 // Define type precision levels
 precision highp float;
 precision mediump int;
-precision lowp sampler2D;
 
 /**
  * A structural definition of the an element in the geometry buffer which is
@@ -78,5 +77,5 @@ void main()
     normal_vector = v.normal_vector;
     texture_coord = v.texture_coord;
     // Set the static vertex position field
-    gl_Position = v.position;
+    gl_Position = vec4((v.position.xyz / 150.0 - vec3(0.0, 0.5, 0.0)) * vec3(1.0, 1.4, 1.0), 1.0);
 }

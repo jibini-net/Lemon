@@ -3,6 +3,7 @@
 #include <iostream>
 #include <thread>
 #include <math.h>
+#include <filesystem>
 
 #include "application.h"
 #include "logger.h"
@@ -35,6 +36,21 @@ namespace lemon
     worker_thread main_thread(false);
     worker_pool primary_pool;
 
+    void split_string(std::string str, std::string delim, std::vector<std::string>& output)
+    {
+        size_t index;
+
+        while ((index = str.find(delim)) != std::string::npos)
+        {
+            std::string sub = str.substr(0, index);
+            output.push_back(sub);
+
+            str.erase(0, index + delim.size());
+        }
+
+        output.push_back(str);
+    }
+
     /**
      * This function will be the first task posted to the main thread for execution.
      * It may post future tasks, but must not hang infinitely.
@@ -52,6 +68,7 @@ namespace lemon
         auto src_frag = read_file("shaders/default.frag");
 
         static gl_context gl(4, 6, true, true);
+        static gl_program shader(gl, src_vert, src_frag);
 
         gl.perform([&]()
         {
@@ -60,39 +77,88 @@ namespace lemon
             glBindVertexArray(vertex_array);
         });
 
-        static gl_ssbo buffer(gl, 0);
-        static gl_program shader(gl, src_vert, src_frag);
+        static std::vector<shader_buffer*> blocks;
 
-        render_data r;
+        {
+            const float heuristic = 0.03575f * 1.25f;
+            long long model_size = std::filesystem::file_size("models/lucy.obj");
 
-        {   /* MEMORY BUFFER INTIALIZATION */
-            r.num_vertices = 3;
-
-            r.vertices[0] = 
+            struct vec3
             {
-                /* VERT */ { -1, -1,  0,  1  },
-                /* DIFF */ {  1,  0,  0,  1  },
-                /* NORM */ {  0,  0,  0  },     { -1 },
-                /* TEXC */ {  0,  1  },         {-1, -1 }
+                float x, y, z;
             };
 
-            r.vertices[1] = 
-            {
-                /* VERT */ {  1, -1,  0,  1  },
-                /* DIFF */ {  0,  1,  0,  1  },
-                /* NORM */ {  0,  0,  0  },     { -1 },
-                /* TEXC */ {  1,  1  },         {-1, -1 }
-            };
+            std::vector<vec3> vertices;
+            vertices.reserve((int)(model_size * heuristic));
+            std::vector<vec3> vertex_normals;
+            vertex_normals.reserve((int)(model_size * heuristic));
 
-            r.vertices[2] = 
-            {
-                /* VERT */ {  0,  1,  0,  1  },
-                /* DIFF */ {  0,  0,  1,  1  },
-                /* NORM */ {  0,  0,  0  },     { -1 },
-                /* TEXC */ {  1,  0  },         {-1, -1 }
-            };
+            render_data* current = nullptr;
+            int i = 0;
 
-            buffer.put(&r, sizeof(r));
+            read_file("models/lucy.obj", false, [&](std::string line)
+            {
+                if (line.size() > 0)
+                {
+                    std::vector<std::string> elements, sub_elements;
+                    split_string(line, " ", elements);
+
+                    vec3 arr;
+
+                    switch (line[0])
+                    {
+                        case 'v':
+                            arr =
+                            {
+                                .x = strtof(elements[1].c_str(), NULL),
+                                .y = strtof(elements[2].c_str(), NULL),
+                                .z = strtof(elements[3].c_str(), NULL)
+                            };
+
+                            if (line[1] == 'n')
+                                vertex_normals.push_back(arr);
+                            else
+                                vertices.push_back(arr);
+                            break;
+
+                        case 'f':
+                            if (current == nullptr || i == MESH_BLOCK_SIZE)
+                            {
+                                if (blocks.size() > 0)
+                                    blocks.back()->unmap();
+
+                                blocks.push_back(new gl_ssbo(gl, 0));
+                                blocks.back()->put(new render_data, sizeof(render_data));
+                                current = blocks.back()->map_typed<render_data>(true, true);
+
+                                i = 0;
+                            }
+
+                            for (int j = 0; j < 3; j++)
+                            {
+                                sub_elements.clear();
+                                split_string(elements[j + 1], "/", sub_elements);
+
+                                auto vert = vertices[strtol(sub_elements[0].c_str(), NULL, 10) - 1];
+                                auto norm = vertex_normals[strtol(sub_elements[2].c_str(), NULL, 10) - 1];
+
+                                current->vertices[i++] =
+                                {
+                                    /* VERT */ { vert.x, vert.y, vert.z, 1.0f },
+                                    /* DIFF */ { norm.x,  norm.y,  norm.z, 1.0f },
+                                    /* NORM */ { norm.x,  norm.y,  norm.z }, { -1.0f },
+                                    /* TEXC */ { 0.0f,  1.0f }, {-1.0f, -1.0f }
+                                };
+                            }
+                    }
+                }
+            });
+            
+            if (blocks.size() > 0)
+            {
+                current->num_vertices = i;
+                blocks.back()->unmap();
+            }
         }
 
         static application app(gl, [&]()
@@ -101,7 +167,16 @@ namespace lemon
             {
                 glViewport(0, 0, 1400, 900);
 
-                glDrawArrays(GL_TRIANGLES, 0, 3);
+                glEnable(GL_DEPTH_TEST);
+                glClear(GL_DEPTH_BUFFER_BIT);
+
+                for (int i = 0; i < blocks.size(); i++)
+                {
+                    auto b = (gl_ssbo*)blocks[i];
+                    b->bind_base();
+
+                    glDrawArrays(GL_TRIANGLES, 0, MESH_BLOCK_SIZE);
+                }
             });
         });
     }

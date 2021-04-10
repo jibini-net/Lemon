@@ -70,7 +70,7 @@ namespace lemon
         while (!execute_mutex.try_lock())
             execute_condition.notify_all();
 
-        // std::lock_guard<std::mutex> lock(this->execute_mutex);
+        //std::lock_guard<std::mutex> lock(this->execute_mutex);
         // Queue the provided task
         this->execution_queue.add(task);
         execute_condition.notify_all();

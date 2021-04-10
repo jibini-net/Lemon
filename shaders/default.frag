@@ -4,7 +4,6 @@
 // Define type precision levels
 precision highp float;
 precision mediump int;
-precision lowp sampler2D;
 
 /**
  * A structural definition of the an element in the geometry buffer which is
