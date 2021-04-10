@@ -15,12 +15,8 @@ namespace lemon
     void GLAPIENTRY _gl_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
                     GLsizei length, const GLchar* message, const void* userParam )
     {
-        static logger log("OpenGL Callback");
-        
-        if (type == GL_DEBUG_TYPE_ERROR)
-            log.error(message);
-        else
-            log.debug(message);
+        std::lock_guard<std::mutex> lock(_log_mutex());
+        std::cerr << message << std::endl;
     }
 
     gl_context::gl_context(
@@ -71,9 +67,10 @@ namespace lemon
         });
 
         // Make this context current in the dedicated worker thread
+        auto window_handle = this->window_handle;
         this->perform([=]()
         {
-            glfwMakeContextCurrent(this->window_handle);
+            glfwMakeContextCurrent(window_handle);
 
             glEnable(GL_DEBUG_OUTPUT);
             glDebugMessageCallback(_gl_message_callback, 0);
@@ -85,9 +82,10 @@ namespace lemon
         log.info("Destroying OpenGL context and related resources");
 
         // GLFW windows must be destroyed on the main thread
+        auto window_handle = this->window_handle;
         main_thread.execute_wait([=]()
         {
-            glfwDestroyWindow(this->window_handle);
+            glfwDestroyWindow(window_handle);
         });
     }
 

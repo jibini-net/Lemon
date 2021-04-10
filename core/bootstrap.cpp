@@ -28,11 +28,6 @@
 
 namespace lemon
 {
-    /**
-     * @brief The bootstrapper-specific logger instance for bootstrap log messages.
-     */
-    logger _log("(Bootstrap)");
-
     worker_thread main_thread(false);
     worker_pool primary_pool;
 
@@ -83,6 +78,8 @@ namespace lemon
             const float heuristic = 0.03575f * 1.25f;
             long long model_size = std::filesystem::file_size("models/lucy.obj");
 
+            static logger log("OBJ Loader");
+
             struct vec3
             {
                 float x, y, z;
@@ -92,6 +89,9 @@ namespace lemon
             vertices.reserve((int)(model_size * heuristic));
             std::vector<vec3> vertex_normals;
             vertex_normals.reserve((int)(model_size * heuristic));
+
+            log.debug("Reserving heuristic buffer of " + std::to_string(vertices.capacity())
+                 + " vertices");
 
             render_data* current = nullptr;
             int i = 0;
@@ -124,6 +124,10 @@ namespace lemon
                         case 'f':
                             if (current == nullptr || i == MESH_BLOCK_SIZE)
                             {
+                                log.debug("Allocating next mesh render data block of "
+                                     + std::to_string(MESH_BLOCK_SIZE)
+                                     + " vertices");
+
                                 if (blocks.size() > 0)
                                     blocks.back()->unmap();
 
@@ -153,6 +157,12 @@ namespace lemon
                     }
                 }
             });
+
+            log.info("Mesh loaded with "
+                 + std::to_string((blocks.size() - 1) * MESH_BLOCK_SIZE + i)
+                 + " vertices ("
+                 + std::to_string(blocks.size())
+                 + " allocated blocks)");
             
             if (blocks.size() > 0)
             {
@@ -196,9 +206,11 @@ namespace lemon
  */
 int main(void)
 {
-    lemon::_log.info("\033[1;33m===============================================================");
-    lemon::_log.info("                 \033[1;31mLemon\033[0m created by \033[1;31mZach Goethel");
-    lemon::_log.info("\033[1;33m===============================================================");
+    static lemon::logger log("(Bootstrap)");
+
+    log.info("\033[1;33m===============================================================");
+    log.info("                 \033[1;31mLemon\033[0m created by \033[1;31mZach Goethel");
+    log.info("\033[1;33m===============================================================");
 
     lemon::main_thread.execute(lemon::start);
     lemon::main_thread.park();

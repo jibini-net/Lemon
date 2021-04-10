@@ -16,6 +16,8 @@
 
 namespace lemon
 {
+	std::mutex& _log_mutex();
+
 	/**
 	 * A rudimentary logger which provides various levels of severity for logged
 	 * messages. This class provides a partial and very rudimentary implementation

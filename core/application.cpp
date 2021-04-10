@@ -81,8 +81,8 @@ namespace lemon
 
                     this->log.debug(std::to_string((int)rate) + " +/- "
                         + std::to_string(percent_dev) + "% fps"
-                        + " (\033[1;31m" + std::to_string((int)min) + "\033[0m"
-                        + ", \033[1;32m" + std::to_string((int)max) + "\033[0m"
+                        + " (\033[1;31m" + std::to_string((int)min) + "\033[0;37m"
+                        + ", \033[1;32m" + std::to_string((int)max) + "\033[0;37m"
                         + ")");
                     if (percent_dev >= STD_DEV_WARNING)
                         this->log.warn("Abnormal variation in frametimes detected; "

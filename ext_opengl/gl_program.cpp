@@ -56,9 +56,7 @@ namespace lemon
 
             log.error("SHADER COMPILE ERROR:\n" + (std::string)error_log.data() + "\n");
         } else
-            log.debug("Shader compiled with no error messages");
-
-        log.debug("Shader is compiled; attaching to shader program and deleting");
+            log.info("Shader compiled with no error messages");
 
         glAttachShader(pointer, shader);
         glDeleteShader(shader);
