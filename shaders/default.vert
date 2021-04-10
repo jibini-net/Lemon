@@ -77,5 +77,5 @@ void main()
     normal_vector = v.normal_vector;
     texture_coord = v.texture_coord;
     // Set the static vertex position field
-    gl_Position = vec4((v.position.xyz / 150.0 - vec3(0.0, 0.5, 0.0)) * vec3(1.0, 1.4, 1.0), 1.0);
+    gl_Position = vec4((v.position.xyz / 125.0 - vec3(0.0, 0.6, 0.0)) * vec3(1.0, 1.4, 1.0), 1.0);
 }

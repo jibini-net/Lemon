@@ -36,11 +36,7 @@ namespace lemon
                 {
                     while (context_count > 0)
                     {
-                        main_thread.execute_wait([&]()
-                        {
-                            glfwPollEvents();
-                        });
-
+                        main_thread.execute_wait(::glfwPollEvents);
                         std::this_thread::sleep_for(std::chrono::milliseconds(2));
                     }
                 });
@@ -63,10 +59,5 @@ namespace lemon
                 glfwTerminate();
             }
         });
-    }
-
-    void glfw_context::poll()
-    {
-        main_thread.execute_wait(::glfwPollEvents);
     }
 }

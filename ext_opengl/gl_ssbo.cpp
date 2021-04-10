@@ -19,7 +19,7 @@ namespace lemon
         this->in_context->perform([&]()
         {
             glGenBuffers(1, &this->pointer);
-        });
+        }, true);
     }
 
     gl_ssbo::~gl_ssbo()
@@ -28,7 +28,7 @@ namespace lemon
         {
             glBindBufferBase(buffer_type, index, GL_NONE);
             glDeleteBuffers(1, &this->pointer);
-        });
+        }, true);
     }
 
     void* gl_ssbo::map(bool read, bool write)
@@ -53,14 +53,17 @@ namespace lemon
         {
             glBindBuffer(buffer_type, pointer);
             address = glMapBuffer(buffer_type, access);
-        });
+        }, true);
         
         return address;
     }
 
     void gl_ssbo::unmap()
     {
-        this->in_context->perform([&]()
+        auto buffer_type = this->buffer_type;
+        auto pointer = this->pointer;
+
+        this->in_context->perform([=]()
         {
             glBindBuffer(buffer_type, pointer);
             glUnmapBuffer(buffer_type);
@@ -69,7 +72,12 @@ namespace lemon
 
     void gl_ssbo::put(void* data, int size)
     {
-        this->in_context->perform([&]()
+        auto buffer_type = this->buffer_type;
+        auto buffer_usage = this->buffer_usage;
+        auto index = this->index;
+        auto pointer = this->pointer;
+
+        this->in_context->perform([=]()
         {
             glBindBuffer(buffer_type, pointer);
             glBufferData(buffer_type, size, data, buffer_usage);
@@ -80,7 +88,11 @@ namespace lemon
 
     void gl_ssbo::bind_base()
     {
-        this->in_context->perform([&]()
+        auto buffer_type = this->buffer_type;
+        auto index = this->index;
+        auto pointer = this->pointer;
+
+        this->in_context->perform([=]()
         {
             glBindBufferBase(buffer_type, index, pointer);
         });

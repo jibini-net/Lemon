@@ -12,9 +12,12 @@
 
 namespace lemon
 {
-    void context::perform(std::function<void()> task)
+    void context::perform(std::function<void()> task, bool wait)
     {
         // Queue directly to worker thread
-        this->thread.execute_wait(task);
+        if (wait)
+            this->thread.execute_wait(task);
+        else
+            this->thread.execute(task);
     }
 }

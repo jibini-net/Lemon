@@ -43,11 +43,6 @@ namespace lemon
             static std::atomic<int> context_count;
 
             /**
-             * @brief Invokes a GLFW input poll on the main thread.
-             */
-            void poll();
-
-            /**
              * @brief Constructs a new GLFW context object.
              */
             glfw_context();

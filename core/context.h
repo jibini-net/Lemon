@@ -80,8 +80,9 @@ namespace lemon
              * @brief Runs a task related to this context within this context.
              * @param task Context-related task to enqueue for execution from
              *      the context's dedicated thread.
+             * @param wait Whether or not the call should hang until complete.
              */
-            void perform(std::function<void()> task);
+            void perform(std::function<void()> task, bool wait = false);
 
             /**
              * @brief Updates the context, swaps the framebuffer, and polls input.

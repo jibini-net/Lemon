@@ -23,7 +23,7 @@ namespace lemon
             this->_attach(GL_FRAGMENT_SHADER, src_frag, "Fragment");
             this->_link();
             this->_use();
-        });
+        }, true);
     }
 
     gl_program::~gl_program()
@@ -31,7 +31,7 @@ namespace lemon
         in_context->perform([&]()
         {
             glDeleteProgram(this->pointer);
-        });
+        }, true);
     }
 
     void gl_program::_attach(GLenum type, std::string source, std::string name)

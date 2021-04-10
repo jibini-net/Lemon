@@ -100,7 +100,7 @@ namespace lemon
             glfwSwapBuffers(this->window_handle);
 
             glClear(GL_COLOR_BUFFER_BIT);
-        });
+        }, true);
     }
 
     bool gl_context::is_alive()

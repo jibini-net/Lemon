@@ -1,20 +1,20 @@
 #include "bootstrap.h"
 
+#include "ext_opengl/ext_opengl.h"
+#include "ext_opengl/gl_ssbo.h"
+#include "ext_opengl/gl_program.h"
+#include "ext_glfw/ext_glfw.h"
+
 #include <iostream>
 #include <thread>
-#include <math.h>
 #include <filesystem>
+#include <math.h>
 
 #include "application.h"
 #include "logger.h"
 #include "worker_thread.h"
 #include "resource.h"
 #include "static_mesh.h"
-
-#include "ext_opengl/ext_opengl.h"
-#include "ext_opengl/gl_ssbo.h"
-#include "ext_opengl/gl_program.h"
-#include "ext_glfw/ext_glfw.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -28,9 +28,18 @@
 
 namespace lemon
 {
+    // Define bootstrapped primary workers
     worker_thread main_thread(false);
     worker_pool primary_pool;
 
+    /**
+     * 
+     * 
+     * @brief Splits the provided string and adds the elements to the output.
+     * @param str Input string to split into elements.
+     * @param delim Delimiter by which to separate the string.
+     * @param output Vector reference which will have elements added.
+     */
     void split_string(std::string str, std::string delim, std::vector<std::string>& output)
     {
         size_t index;
@@ -65,7 +74,7 @@ namespace lemon
         static gl_context gl(4, 6, true, true);
         static gl_program shader(gl, src_vert, src_frag);
 
-        gl.perform([&]()
+        gl.perform([]()
         {
             GLuint vertex_array;
             glGenVertexArrays(1, &vertex_array);
@@ -90,7 +99,8 @@ namespace lemon
             std::vector<vec3> vertex_normals;
             vertex_normals.reserve((int)(model_size * heuristic));
 
-            log.debug("Reserving heuristic buffer of " + std::to_string(vertices.capacity())
+            log.debug("Reserving heuristic buffer of "
+                 + std::to_string(vertices.capacity())
                  + " vertices");
 
             render_data* current = nullptr;
@@ -124,7 +134,7 @@ namespace lemon
                         case 'f':
                             if (current == nullptr || i == MESH_BLOCK_SIZE)
                             {
-                                log.debug("Allocating next mesh render data block of "
+                                log.debug("Allocating next mesh block of "
                                      + std::to_string(MESH_BLOCK_SIZE)
                                      + " vertices");
 
@@ -173,21 +183,24 @@ namespace lemon
 
         static application app(gl, [&]()
         {
-            gl.perform([&]()
+            gl.perform([]()
             {
                 glViewport(0, 0, 1400, 900);
 
                 glEnable(GL_DEPTH_TEST);
                 glClear(GL_DEPTH_BUFFER_BIT);
-
-                for (int i = 0; i < blocks.size(); i++)
-                {
-                    auto b = (gl_ssbo*)blocks[i];
-                    b->bind_base();
-
-                    glDrawArrays(GL_TRIANGLES, 0, MESH_BLOCK_SIZE);
-                }
             });
+
+            for (int i = 0; i < blocks.size(); i++)
+            {
+                auto b = (gl_ssbo*)blocks[i];
+                b->bind_base();
+
+                gl.perform([]()
+                {
+                    glDrawArrays(GL_TRIANGLES, 0, MESH_BLOCK_SIZE);
+                });
+            }
         });
     }
 }

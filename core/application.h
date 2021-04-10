@@ -19,7 +19,10 @@
 namespace lemon
 {
     /**
+     * 
+     * 
      * @brief A single discrete application with a graphical context.
+     * @author Zach Goethel
      */
     class application
     {
