@@ -33,7 +33,13 @@ namespace lemon
     worker_pool primary_pool;
 
     /**
+     * Iteratively finds the provided delimiter and trims the start of the
+     * string until no instance of the delmiter remains.  Removed portions of
+     * the input string are pushed back onto the provided output vector.
+     * Instances of the delimiter will be removed in the produced elements.
      * 
+     * If no instances of the delimiter exist in the input stream, the output
+     * vector will have one element (the input value).
      * 
      * @brief Splits the provided string and adds the elements to the output.
      * @param str Input string to split into elements.
@@ -43,26 +49,29 @@ namespace lemon
     void split_string(std::string str, std::string delim, std::vector<std::string>& output)
     {
         size_t index;
-
+        
+        // Search for the next delimiter index
         while ((index = str.find(delim)) != std::string::npos)
         {
-            std::string sub = str.substr(0, index);
-            output.push_back(sub);
-
+            // Push back the element onto the output vector
+            output.push_back(str.substr(0, index));
+            // Remove the characters from the input string
             str.erase(0, index + delim.size());
         }
 
+        // Push back the last remaining element
         output.push_back(str);
     }
 
     /**
-     * This function will be the first task posted to the main thread for execution.
-     * It may post future tasks, but must not hang infinitely.
+     * This function will be the first task posted to the main thread for
+     * execution.  It may post future tasks, but must not hang infinitely.
      * 
-     * Its primary purpose is to initialize the rendering engine and any required
-     * contexts for applications maintained by this runtime instance. This may also
-     * include creating additional threads and contexts, loading configuration, and
-     * allocating resources as necessary to start applications.
+     * Its primary purpose is to initialize the rendering engine and any
+     * required contexts for applications maintained by this runtime instance.
+     * This may also include creating additional threads and contexts, loading
+     * configuration, and allocating resources as necessary to start
+     * applications.
      * 
      * @brief Runtime instance initialization and bootstrapping method.
      */
@@ -84,8 +93,9 @@ namespace lemon
         static std::vector<shader_buffer*> blocks;
 
         {
+            std::string fname = "models/lucy.obj";
             const float heuristic = 0.03575f * 1.25f;
-            long long model_size = std::filesystem::file_size("models/lucy.obj");
+            long long model_size = std::filesystem::file_size(fname);
 
             static logger log("OBJ Loader");
 
@@ -106,7 +116,7 @@ namespace lemon
             render_data* current = nullptr;
             int i = 0;
 
-            read_file("models/lucy.obj", false, [&](std::string line)
+            read_file(fname, false, [&](std::string line)
             {
                 if (line.size() > 0)
                 {
@@ -181,7 +191,7 @@ namespace lemon
             }
         }
 
-        static application app(gl, [&]()
+        static application app(gl, [&](double delta)
         {
             gl.perform([]()
             {
@@ -199,6 +209,31 @@ namespace lemon
                 gl.perform([]()
                 {
                     glDrawArrays(GL_TRIANGLES, 0, MESH_BLOCK_SIZE);
+                });
+
+                primary_pool.execute([=]()
+                {
+                    b->map_scoped<render_data>(true, true, [=](auto mapped)
+                    {
+                        int k = 0;
+                        for (k; k < mapped->num_vertices; k++)
+                        {
+                            auto now = std::chrono::high_resolution_clock::now().time_since_epoch();
+                            auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+                            auto sec = (double)millis / 1000.0;
+
+                            auto x = &mapped->vertices[k].position[0];
+                            auto y = &mapped->vertices[k].position[1];
+                            auto z = &mapped->vertices[k].position[2];
+
+                            //*y += (float)delta * cos((double)(sec + *x / 3));
+                            //*x += (float)delta * sin((double)(sec + *x / 3));
+                            auto dist = sqrt(*x * *x + *z * *z);
+                            auto angl = atan2(*z, *x);
+                            *x -= (float)(sin(angl) * delta * dist);
+                            *z += (float)(cos(angl) * delta * dist);
+                        }
+                    });
                 });
             }
         });

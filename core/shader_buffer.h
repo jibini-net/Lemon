@@ -26,6 +26,8 @@ namespace lemon
     protected:
         logger log { "Shader Data"};
 
+        std::mutex mutex;
+
     public:
         shader_buffer(context& in_context) : resource(in_context)
         { }
@@ -48,6 +50,8 @@ namespace lemon
         template <typename T>
         void map_scoped(bool read, bool write, std::function<void(T* mapped)> action)
         {
+            std::lock_guard<std::mutex> lock(mutex);
+
             T* mapped = this->map_typed<T>(read, write);
             action(mapped);
             this->unmap();

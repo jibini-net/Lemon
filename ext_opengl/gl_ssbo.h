@@ -29,6 +29,8 @@ namespace lemon
 
             GLenum buffer_usage = GL_DYNAMIC_COPY;
 
+            void* mapped = nullptr;
+
         public:
             gl_ssbo(context& in_context, int index);
 

@@ -39,6 +39,7 @@ namespace lemon
         // Frame-time and min/max states
         auto last_time = last_update;
         double max = -1.0, min = -1.0;
+        double delta = 0.0;
 
         // Standard deviation states
         double mean = 0.0, mean2 = 0.0;
@@ -49,7 +50,7 @@ namespace lemon
             try
             {
                 // Run each frame
-                this->loop();
+                this->loop(delta);
             } catch(const std::exception& ex)
             {
                 auto error = ex.what();
@@ -65,6 +66,7 @@ namespace lemon
                 // Calculate frame time (nano) and frames per second
                 int frame_time = (int)delta_nano(time, last_time);
                 double frames = 1000000000.0 / frame_time;
+                delta = (double)frame_time / 1000000000.0;
                 // Compare to current min/max values
                 if (frames > max || max == -1.0)
                     max = frames;
@@ -74,9 +76,9 @@ namespace lemon
                 last_time = time;
 
                 /* STANDARD DEVIATION */
-                double delta = frames - mean;
-                mean += delta / frame_count;
-                mean2 += delta * (frames - mean);
+                double diff = frames - mean;
+                mean += diff / frame_count;
+                mean2 += diff * (frames - mean);
                 variance = mean2 / frame_count;
 
                 /* LOG OUTPUT */

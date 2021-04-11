@@ -47,26 +47,33 @@ namespace lemon
             return nullptr;
         }
 
-        void* address;
-
+        void*& mapped = this->mapped;
         this->in_context->perform([&]()
         {
-            glBindBuffer(buffer_type, pointer);
-            address = glMapBuffer(buffer_type, access);
+            if (mapped == nullptr)
+            {
+                glBindBuffer(buffer_type, pointer);
+                mapped = glMapBuffer(buffer_type, access);
+            }
         }, true);
         
-        return address;
+        return mapped;
     }
 
     void gl_ssbo::unmap()
     {
         auto buffer_type = this->buffer_type;
         auto pointer = this->pointer;
+        void*& mapped = this->mapped;
 
-        this->in_context->perform([=]()
+        this->in_context->perform([=, &mapped]()
         {
-            glBindBuffer(buffer_type, pointer);
-            glUnmapBuffer(buffer_type);
+            if (mapped != nullptr)
+            {
+                glBindBuffer(buffer_type, pointer);
+                glUnmapBuffer(buffer_type);
+                mapped = nullptr;
+            }
         });
     }
 
@@ -74,15 +81,12 @@ namespace lemon
     {
         auto buffer_type = this->buffer_type;
         auto buffer_usage = this->buffer_usage;
-        auto index = this->index;
         auto pointer = this->pointer;
 
         this->in_context->perform([=]()
         {
             glBindBuffer(buffer_type, pointer);
             glBufferData(buffer_type, size, data, buffer_usage);
-
-            glBindBufferBase(buffer_type, index, pointer);
         });
     }
 
