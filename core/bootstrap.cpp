@@ -226,12 +226,14 @@ namespace lemon
                             auto y = &mapped->vertices[k].position[1];
                             auto z = &mapped->vertices[k].position[2];
 
-                            //*y += (float)delta * cos((double)(sec + *x / 3));
-                            //*x += (float)delta * sin((double)(sec + *x / 3));
                             auto dist = sqrt(*x * *x + *z * *z);
                             auto angl = atan2(*z, *x);
                             *x -= (float)(sin(angl) * delta * dist);
                             *z += (float)(cos(angl) * delta * dist);
+
+                            auto dist_b = sqrt(*x * *x + *z * *z);
+                            *x *= dist / dist_b;
+                            *z *= dist / dist_b;
                         }
                     });
                 });
