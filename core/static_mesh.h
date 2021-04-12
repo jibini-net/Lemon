@@ -1,5 +1,7 @@
 #pragma once
 
+#include "mat_vec.h"
+
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
 //                    COPYRIGHT (c) 2021 by ZACH GOETHEL                      //
@@ -11,6 +13,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #define MESH_BLOCK_SIZE 16392 * 3
+#define MESH_MAX_BODIES 2048
 
 namespace lemon
 {
@@ -25,31 +28,37 @@ namespace lemon
     struct vertex
     {
         /**
-         * Position of this vertex (x, y, z, and w).
+         * Three-dimensional weighted position of this vertex (x, y, z, and w).
          */
-        float position[4];
+        vec4 position;
 
         /**
          * Color of this vertex.  This will be linearly interpolated at each
-         * fragment which is rendered.
+         * fragment which is rendered (r, g, b, and a).
          */
-        float diffuse[4];
+        vec4 diffuse;
 
         /**
          * Normal vector of this vertex which defines which direction this vertex is
          * facing in three-dimensional space.  This will be linearly interpolated at
-         * each fragment which is rendered.
+         * each fragment which is rendered (x, y, and z).
          */
-        float normal_vector[3];
-        float __padding0[1];
+        vec3 normal_vector;
+        float __padding_0[1];
 
         /**
          * The texture coordinate of this vertex which will be used to sample the
          * texture which is currently bound.  This will be linearly interpolated at
-         * each fragment which is rendered.
+         * each fragment which is rendered (s and t).
          */
-        float texture_coord[2];
-        float __padding1[2];
+        vec2 texture_coord;
+
+        /**
+         * Index of the body to which this vertex belongs.  This will provide
+         * material and transformation data for this vertex.
+         */
+        unsigned int body_index;
+        float __padding_1[1];
     };
 
     /**
@@ -67,8 +76,8 @@ namespace lemon
          * How many vertices are held in this vertex buffer.  The vertex shader will
          * be invoked this many times.  This is also the size of the vertex array.
          */
-        int num_vertices = MESH_BLOCK_SIZE;
-        float __padding0[3];
+        unsigned int num_vertices = MESH_BLOCK_SIZE;
+        float __padding[3];
 
         /**
          * A contiguous vertex buffer which contains all vertices rendered in this
@@ -76,5 +85,66 @@ namespace lemon
          * vertex indexed at the current vertex ID.
          */
         vertex vertices[MESH_BLOCK_SIZE];
+    };
+
+    /**
+     * A single discrete static mesh body of a particular material.  Each body can
+     * have its own local transforms and material data.
+     * 
+     * @brief Body structure as defined in video memory buffers.
+     * @author Zach Goethel
+     */
+    struct body
+    {
+        /**
+         * This body's local transformation matrix.
+         */
+        mat4 transform;
+
+        /**
+         * The diffuse color of this body's material.
+         */
+        vec4 diffuse;
+
+        /**
+         * Coefficient of diffuse lighting on this body.
+         */
+        float diff;
+
+        /**
+         * Coefficient of specular lighting on this body.
+         */
+        float spec;
+
+        /**
+         * Applied specular lighting exponential power.
+         */
+        float spec_power;
+
+        /**
+         * Constant for ambient lighting on this body.
+         */
+        float ambient;
+    };
+
+    /**
+     * This buffer will contain all of the bodies, local transforms, and material
+     * data for those bodies.
+     * 
+     * @brief Mesh body structure as defined in video memory buffers.
+     * @author Zach Goethel
+     */
+    struct body_data
+    {
+        /**
+         * The number of bodies which may be represented in this render pass.
+         */
+        unsigned int num_bodies = 0;
+        float __padding[3];
+
+        /**
+         * Array of all present bodies in memory.
+         */
+        body bodies[MESH_MAX_BODIES];
     };
 };

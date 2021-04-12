@@ -36,6 +36,8 @@ add_library (LemonCore STATIC
     "core/application.cpp"
     "core/context.h"
     "core/context.cpp"
+    "core/mat_vec.h"
+    "core/mat_vec.cpp"
 
     "core/shader_buffer.h"
     "core/shader_program.h"

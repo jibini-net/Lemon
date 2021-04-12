@@ -77,12 +77,14 @@ namespace lemon
      */
     void start()
     {
+        // Load basic shader program GLSL sources
         auto src_vert = read_file("shaders/default.vert");
         auto src_frag = read_file("shaders/default.frag");
-
+        // Create graphical context and basic shader program
         static gl_context gl(4, 6, true, true);
         static gl_program shader(gl, src_vert, src_frag);
 
+        // Bind a default vertex array (required)
         gl.perform([]()
         {
             GLuint vertex_array;
@@ -90,19 +92,35 @@ namespace lemon
             glBindVertexArray(vertex_array);
         });
 
+        static gl_ssbo bodies(gl, 1);
+        bodies.put(new body_data, sizeof(body_data));
+        bodies.bind_base();
+
+        bodies.map_scoped<body_data>(true, true, [&](auto mapped)
+        {
+            mapped->num_bodies = 1;
+            mapped->bodies[0] =
+            {
+                // .transform = mat::ortho(-800.0f, 800.0f, -450.0f, 450.0f, -800.0f, 800.0f),
+                .transform = mat::perspective(14.0f / 9, 3.14f / 2, 0.1f, 800.0f),
+                .diffuse =  { 1.0f, 1.0f, 1.0f, 1.0f },
+
+                .diff = { 0.4f },
+                .spec = { 1.0f },
+                .spec_power = { 100.0f },
+                .ambient = { 0.01f }
+            };
+        });
+
+        // Create a list of shader buffers for mesh blocks
         static std::vector<shader_buffer*> blocks;
 
         {
-            std::string fname = "models/lucy.obj";
+            std::string fname = "models/xyzrgb_dragon.obj";
             const float heuristic = 0.03575f * 1.25f;
             long long model_size = std::filesystem::file_size(fname);
 
             static logger log("OBJ Loader");
-
-            struct vec3
-            {
-                float x, y, z;
-            };
 
             std::vector<vec3> vertices;
             vertices.reserve((int)(model_size * heuristic));
@@ -128,17 +146,17 @@ namespace lemon
                     switch (line[0])
                     {
                         case 'v':
-                            arr =
-                            {
-                                .x = strtof(elements[1].c_str(), NULL),
-                                .y = strtof(elements[2].c_str(), NULL),
-                                .z = strtof(elements[3].c_str(), NULL)
-                            };
+                            arr.x = strtof(elements[1].c_str(), NULL);
+                            arr.y = strtof(elements[2].c_str(), NULL);
+                            arr.z = strtof(elements[3].c_str(), NULL);
 
                             if (line[1] == 'n')
                                 vertex_normals.push_back(arr);
                             else
-                                vertices.push_back(arr);
+                                vertices.push_back(vec3
+                                {
+                                    arr.x, arr.y, arr.z
+                                });
                             break;
 
                         case 'f':
@@ -152,6 +170,7 @@ namespace lemon
                                     blocks.back()->unmap();
 
                                 blocks.push_back(new gl_ssbo(gl, 0));
+
                                 blocks.back()->put(new render_data, sizeof(render_data));
                                 current = blocks.back()->map_typed<render_data>(true, true);
 
@@ -168,10 +187,11 @@ namespace lemon
 
                                 current->vertices[i++] =
                                 {
-                                    /* VERT */ { vert.x, vert.y, vert.z, 1.0f },
-                                    /* DIFF */ { norm.x,  norm.y,  norm.z, 1.0f },
-                                    /* NORM */ { norm.x,  norm.y,  norm.z }, { -1.0f },
-                                    /* TEXC */ { 0.0f,  1.0f }, {-1.0f, -1.0f }
+                                    .position = { vert.x, vert.y, vert.z, 1.0f },
+                                    .diffuse = { 1.0f, 1.0f, 1.0f, 1.0f },
+                                    .normal_vector = { norm.x,  norm.y,  norm.z }, 
+                                    .texture_coord = { 0.0f,  1.0f },
+                                    .body_index = { 0U }
                                 };
                             }
                     }
@@ -184,6 +204,7 @@ namespace lemon
                  + std::to_string(blocks.size())
                  + " allocated blocks)");
             
+            // Unmap the last unfilled buffer if there is one
             if (blocks.size() > 0)
             {
                 current->num_vertices = i;
@@ -191,8 +212,10 @@ namespace lemon
             }
         }
 
+        // Create application lifecycle loop instance
         static application app(gl, [&](double delta)
         {
+            // Prepare each frame for rendering (viewport, depth buffer)
             gl.perform([]()
             {
                 glViewport(0, 0, 1400, 900);
@@ -201,6 +224,7 @@ namespace lemon
                 glClear(GL_DEPTH_BUFFER_BIT);
             });
 
+            // Render each model mesh block; not yet abstracted
             for (int i = 0; i < blocks.size(); i++)
             {
                 auto b = (gl_ssbo*)blocks[i];
@@ -209,33 +233,6 @@ namespace lemon
                 gl.perform([]()
                 {
                     glDrawArrays(GL_TRIANGLES, 0, MESH_BLOCK_SIZE);
-                });
-
-                primary_pool.execute([=]()
-                {
-                    b->map_scoped<render_data>(true, true, [=](auto mapped)
-                    {
-                        int k = 0;
-                        for (k; k < mapped->num_vertices; k++)
-                        {
-                            auto now = std::chrono::high_resolution_clock::now().time_since_epoch();
-                            auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
-                            auto sec = (double)millis / 1000.0;
-
-                            auto x = &mapped->vertices[k].position[0];
-                            auto y = &mapped->vertices[k].position[1];
-                            auto z = &mapped->vertices[k].position[2];
-
-                            auto dist = sqrt(*x * *x + *z * *z);
-                            auto angl = atan2(*z, *x);
-                            *x -= (float)(sin(angl) * delta * dist);
-                            *z += (float)(cos(angl) * delta * dist);
-
-                            auto dist_b = sqrt(*x * *x + *z * *z);
-                            *x *= dist / dist_b;
-                            *z *= dist / dist_b;
-                        }
-                    });
                 });
             }
         });
