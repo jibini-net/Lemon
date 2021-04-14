@@ -141,7 +141,7 @@ void main()
     // Fetch the current vertex object
     vertex v = vertices[gl_VertexID];
     // Set the interpolated fields
-    position = /* b.transform * m_model * */ (v.position * vec4(1, -1, 1, 1) + vec4(0.0, -40.0, -100.0, 0.0)).xyz;
+    position = (/* b.transform * m_model * */ v.position).xyz;
     diffuse = v.diffuse;
     normal_vector = v.normal_vector;
     texture_coord = v.texture_coord;
@@ -149,5 +149,5 @@ void main()
     body_index = v.body_index;
     body b = bodies[v.body_index];
     // Set the static vertex position field
-    gl_Position = b.transform /* * m_model * m_project */ * (v.position * vec4(1, -1, 1, 1) + vec4(0.0, -40.0, -100.0, 0.0));
+    gl_Position = b.transform /* * m_model * m_project */ * v.position;
 }

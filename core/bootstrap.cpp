@@ -101,13 +101,12 @@ namespace lemon
             mapped->num_bodies = 1;
             mapped->bodies[0] =
             {
-                // .transform = mat::ortho(-800.0f, 800.0f, -450.0f, 450.0f, -800.0f, 800.0f),
-                .transform = mat::perspective(14.0f / 9, 3.14f / 2, 0.1f, 800.0f),
+                .transform = mat::perspective(14.0f / 9, 3.14f / 2, 0.1f, 1024.0f),
                 .diffuse =  { 1.0f, 1.0f, 1.0f, 1.0f },
 
-                .diff = { 0.4f },
-                .spec = { 1.0f },
-                .spec_power = { 100.0f },
+                .diff = { 0.1f },
+                .spec = { 1.9f },
+                .spec_power = { 120.0f },
                 .ambient = { 0.01f }
             };
         });
@@ -219,6 +218,7 @@ namespace lemon
             gl.perform([]()
             {
                 glViewport(0, 0, 1400, 900);
+                glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
                 glEnable(GL_DEPTH_TEST);
                 glClear(GL_DEPTH_BUFFER_BIT);

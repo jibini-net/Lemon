@@ -138,8 +138,7 @@ void main()
 {
     body b = bodies[body_index];
     // Set the output fragment to a modulated sampled color
-    vec3 from_frag = normalize(-position);
-    float c = dot(from_frag, normal_vector);
+    float c = abs(normal_vector.z);
 
     float a = b.ambient;
     float d = b.diff * pow(c, 2.0);
