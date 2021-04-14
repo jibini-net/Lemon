@@ -29,7 +29,7 @@ namespace lemon
         std::mutex mutex;
 
     public:
-        shader_buffer(context& in_context) : resource(in_context)
+        shader_buffer(std::shared_ptr<context> in_context) : resource(in_context)
         { }
 
         ~shader_buffer()

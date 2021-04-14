@@ -32,7 +32,7 @@ namespace lemon
             void* mapped = nullptr;
 
         public:
-            gl_ssbo(context& in_context, int index);
+            gl_ssbo(std::shared_ptr<context> in_context, int index);
 
             ~gl_ssbo();
 

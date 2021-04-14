@@ -81,27 +81,29 @@ namespace lemon
         auto src_vert = read_file("shaders/default.vert");
         auto src_frag = read_file("shaders/default.frag");
         // Create graphical context and basic shader program
-        static gl_context gl(4, 6, true, true);
-        static gl_program shader(gl, src_vert, src_frag);
+        std::shared_ptr<context> gl(new gl_context(4, 6, true, true));
+        std::shared_ptr<shader_program> shader(new gl_program(gl, src_vert, src_frag));
 
         // Bind a default vertex array (required)
-        gl.perform([]()
+        gl->perform([]()
         {
             GLuint vertex_array;
             glGenVertexArrays(1, &vertex_array);
             glBindVertexArray(vertex_array);
         });
 
-        static gl_ssbo bodies(gl, 1);
-        bodies.put(new body_data, sizeof(body_data));
-        bodies.bind_base();
+        std::shared_ptr<gl_ssbo> bodies(new gl_ssbo(gl, 1));
+        bodies->put(new body_data, sizeof(body_data));
 
-        bodies.map_scoped<body_data>(true, true, [&](auto mapped)
+        bodies->map_scoped<body_data>(true, true, [&](auto mapped)
         {
+            auto w = 70.0f * 1.5f;
+            auto h = 45.0f * 1.5f;
+
             mapped->num_bodies = 1;
             mapped->bodies[0] =
             {
-                .transform = mat::perspective(14.0f / 9, 3.14f / 2, 0.1f, 1024.0f),
+                .transform = mat::ortho(-w, w, -h, h, -512.0f, 512.0f),
                 .diffuse =  { 1.0f, 1.0f, 1.0f, 1.0f },
 
                 .diff = { 0.1f },
@@ -112,7 +114,7 @@ namespace lemon
         });
 
         // Create a list of shader buffers for mesh blocks
-        static std::vector<shader_buffer*> blocks;
+        std::vector<std::shared_ptr<gl_ssbo>> blocks;
 
         {
             std::string fname = "models/xyzrgb_dragon.obj";
@@ -168,7 +170,7 @@ namespace lemon
                                 if (blocks.size() > 0)
                                     blocks.back()->unmap();
 
-                                blocks.push_back(new gl_ssbo(gl, 0));
+                                blocks.push_back(std::shared_ptr<gl_ssbo>(new gl_ssbo(gl, 0)));
 
                                 blocks.back()->put(new render_data, sizeof(render_data));
                                 current = blocks.back()->map_typed<render_data>(true, true);
@@ -212,10 +214,12 @@ namespace lemon
         }
 
         // Create application lifecycle loop instance
-        static application app(gl, [&](double delta)
+        static application app(gl, [=](double delta)
         {
+            auto keep_alive = shader;
+
             // Prepare each frame for rendering (viewport, depth buffer)
-            gl.perform([]()
+            gl->perform([]()
             {
                 glViewport(0, 0, 1400, 900);
                 glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -227,10 +231,11 @@ namespace lemon
             // Render each model mesh block; not yet abstracted
             for (int i = 0; i < blocks.size(); i++)
             {
-                auto b = (gl_ssbo*)blocks[i];
+                auto b = blocks[i];
                 b->bind_base();
+                bodies->bind_base();
 
-                gl.perform([]()
+                gl->perform([]()
                 {
                     glDrawArrays(GL_TRIANGLES, 0, MESH_BLOCK_SIZE);
                 });

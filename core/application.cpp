@@ -4,8 +4,6 @@
 #include <chrono>
 #include <math.h>
 
-#include "resource_stack.h"
-
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
 //                    COPYRIGHT (c) 2021 by ZACH GOETHEL                      //
@@ -29,7 +27,7 @@ typedef std::chrono::nanoseconds nano;
 
 namespace lemon
 {
-    void application::start()
+    void application::start(std::function<void(double)> loop)
     {
         // Frame counting states
         auto last_update = high_res::now();
@@ -50,7 +48,7 @@ namespace lemon
             try
             {
                 // Run each frame
-                this->loop(delta);
+                loop(delta);
             } catch(const std::exception& ex)
             {
                 auto error = ex.what();
@@ -111,6 +109,19 @@ namespace lemon
         }
 
         this->log.debug("App context has died on current thread");
-        delete this->base_hold;
+        this->app_context.reset();
+    }
+
+    application::application(std::shared_ptr<context> app_context, std::function<void(double)> loop)
+    {
+        this->app_context = app_context;
+
+        // Start the application on the dedicated thread
+        log.debug("Starting application on dedicated thread");
+        this->app_thread.execute([=]()
+        {
+            log.debug("Active on dedicated thread; looping until context dies");
+            this->start(loop);
+        });
     }
 }

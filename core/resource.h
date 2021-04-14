@@ -36,9 +36,9 @@ namespace lemon
              * @brief Constructs a new resource object of some type.
              * @param in_context The resource is linked to this context.
              */
-            resource(context& in_context)
+            resource(std::shared_ptr<context> in_context)
             {
-                this->in_context.reset(&in_context);
+                this->in_context = in_context;
             }
 
             /**

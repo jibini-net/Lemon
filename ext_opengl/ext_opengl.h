@@ -6,7 +6,6 @@
 #include "ext_glfw/ext_glfw.h"
 
 #include "core/context.h"
-#include "core/resource_stack.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //

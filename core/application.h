@@ -54,7 +54,7 @@ namespace lemon
              * 
              * @brief This application's unique graphical context of any type.
              */
-            context* app_context;
+            std::shared_ptr<context> app_context;
 
             /**
              * Choreography tasks (frame updates, allocation, invocation of
@@ -72,47 +72,17 @@ namespace lemon
              * graphical context updates (buffer swap, buffer clearing, etc.).
              * 
              * @brief Started on the application's dedicated thread to boot.
+             * @param loop A function which is invoked each frame to update the
+             *      application, provided frame-times.
              */
-            void start();
+            void start(std::function<void(double)> loop);
 
             /**
              * @brief Application-management-specific logger instance.
              */
             logger log { "Application" };
 
-            /**
-             * @brief This application's resource stack for application assets.
-             */
-            resource_stack resources;
-
-            /**
-             * @brief A resource hold on the stack's base (e.g., context).
-             */
-            resource_hold* base_hold = new resource_hold { this->resources };
-
-            /**
-             * @brief A function which is invoked for every frame.
-             */
-            std::function<void(double)> loop;
-
         public:
-            template <class T>
-            application(T& app_context, std::function<void(double)> loop)
-            {
-                // Maintain a reference to the context
-                this->app_context = &app_context;
-                // Register the context for deletion
-                this->resources.attach(&app_context);
-
-                this->loop = loop;
-
-                // Start the application on the dedicated thread
-                log.debug("Starting application on dedicated thread");
-                this->app_thread.execute([&]()
-                {
-                    log.debug("Active on dedicated thread; looping until context dies");
-                    this->start();
-                });
-            }
+            application(std::shared_ptr<context> app_context, std::function<void(double)> loop);
     };
 }

@@ -30,7 +30,7 @@ namespace lemon
             void _use();
 
         public:
-            gl_program(context& in_context, std::string src_vert, std::string src_frag);
+            gl_program(std::shared_ptr<context> in_context, std::string src_vert, std::string src_frag);
 
             ~gl_program();
     };

@@ -23,7 +23,7 @@ namespace lemon
         logger log { "Shader Program" };
 
     public:
-        shader_program(context& in_context) : resource(in_context)
+        shader_program(std::shared_ptr<context> in_context) : resource(in_context)
         { }
 
         ~shader_program()

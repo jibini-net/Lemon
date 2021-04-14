@@ -1,6 +1,5 @@
 #pragma once
 
-#include "resource_stack.h"
 #include "worker_thread.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -24,9 +23,4 @@ namespace lemon
      * @brief Global worker pool for multithreading across all system threads.
      */
     extern worker_pool primary_pool;
-
-    /**
-     * @brief The application's global tiered resource allocation stack.
-     */
-    extern resource_stack primary_resources;
 }

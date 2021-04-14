@@ -12,15 +12,17 @@
 
 namespace lemon
 {
-    gl_program::gl_program(context& in_context,
+    gl_program::gl_program(std::shared_ptr<context> in_context,
         std::string src_vert,
         std::string src_frag) : shader_program(in_context)
     {
-        in_context.perform([&]()
+        in_context->perform([&]()
         {
             this->pointer = glCreateProgram();
+
             this->_attach(GL_VERTEX_SHADER, src_vert, "Vertex");
             this->_attach(GL_FRAGMENT_SHADER, src_frag, "Fragment");
+            
             this->_link();
             this->_use();
         }, true);
