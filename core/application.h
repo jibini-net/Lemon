@@ -5,6 +5,7 @@
 #include "context.h"
 #include "worker_thread.h"
 #include "logger.h"
+#include "extension.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -43,6 +44,18 @@ namespace lemon
      */
     class application
     {
+        private:
+            /**
+             * This function will hang until the application dies.  It is the
+             * primary application loop which invokes rendering, updates, and
+             * graphical context updates (buffer swap, buffer clearing, etc.).
+             * 
+             * @brief Started on the application's dedicated thread to boot.
+             * @param loop A function which is invoked each frame to update the
+             *      application, provided frame-times.
+             */
+            void start();
+
         protected:
             /**
              * This graphical context provides asset instances and performs
@@ -66,16 +79,7 @@ namespace lemon
              */
             worker_thread app_thread;
         
-            /**
-             * This function will hang until the application dies.  It is the
-             * primary application loop which invokes rendering, updates, and
-             * graphical context updates (buffer swap, buffer clearing, etc.).
-             * 
-             * @brief Started on the application's dedicated thread to boot.
-             * @param loop A function which is invoked each frame to update the
-             *      application, provided frame-times.
-             */
-            void start(std::function<void(double)> loop);
+            std::shared_ptr<extension> ext;
 
             /**
              * @brief Application-management-specific logger instance.
@@ -83,6 +87,15 @@ namespace lemon
             logger log { "Application" };
 
         public:
-            application(std::shared_ptr<context> app_context, std::function<void(double)> loop);
+            application(std::shared_ptr<extension> ext);
+
+            virtual void setup()
+            { }
+
+            virtual void update(double delta)
+            { }
+
+            virtual void destroy()
+            { }
     };
 }

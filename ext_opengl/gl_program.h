@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ext_opengl.h"
+#include "gl_context.h"
 
 #include "core/shader_program.h"
 #include "core/context.h"

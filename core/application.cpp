@@ -27,8 +27,11 @@ typedef std::chrono::nanoseconds nano;
 
 namespace lemon
 {
-    void application::start(std::function<void(double)> loop)
+    void application::start()
     {
+        this->app_context = ext->create_context();
+        this->setup();
+
         // Frame counting states
         auto last_update = high_res::now();
         int frame_count = 0;
@@ -48,7 +51,7 @@ namespace lemon
             try
             {
                 // Run each frame
-                loop(delta);
+                this->update(delta);
             } catch(const std::exception& ex)
             {
                 auto error = ex.what();
@@ -109,19 +112,20 @@ namespace lemon
         }
 
         this->log.debug("App context has died on current thread");
+        this->destroy();
         this->app_context.reset();
     }
 
-    application::application(std::shared_ptr<context> app_context, std::function<void(double)> loop)
+    application::application(std::shared_ptr<extension> ext)
     {
-        this->app_context = app_context;
+        this->ext = ext;
 
         // Start the application on the dedicated thread
         log.debug("Starting application on dedicated thread");
-        this->app_thread.execute([=]()
+        this->app_thread.execute([=, this]()
         {
             log.debug("Active on dedicated thread; looping until context dies");
-            this->start(loop);
+            this->start();
         });
     }
 }

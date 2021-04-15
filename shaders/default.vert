@@ -136,18 +136,34 @@ uniform mat4 m_model;
 // Uniform bound texture sampler (must be set)
 uniform sampler2D texture;
 
+uniform float time;
+
 void main()
 {
     // Fetch the current vertex object
     vertex v = vertices[gl_VertexID];
+    // Fetch the current vertex's body
+    body_index = v.body_index;
+    body b = bodies[v.body_index];
+
     // Set the interpolated fields
     position = (/* b.transform * m_model * */ v.position).xyz;
     diffuse = v.diffuse;
     normal_vector = v.normal_vector;
     texture_coord = v.texture_coord;
-    // Fetch the current vertex's body
-    body_index = v.body_index;
-    body b = bodies[v.body_index];
+
+    vec4 pos = v.position;
+    float len = length(pos.xz);
+    float angle = atan(pos.z, pos.x);
+    pos.x = -len * sin(angle + time);
+    pos.z = len * cos(angle + time);
+    pos.z -= 110.0;
+
+    len = length(normal_vector.xz);
+    angle = atan(normal_vector.z, normal_vector.x);
+    normal_vector.x = -len * sin(angle + time);
+    normal_vector.z = len * cos(angle + time);
+
     // Set the static vertex position field
-    gl_Position = b.transform /* * m_model * m_project */ * v.position;
+    gl_Position = b.transform /* * m_model * m_project */ * pos;
 }

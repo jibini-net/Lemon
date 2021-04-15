@@ -1,11 +1,10 @@
 #pragma once
 
-#include "GL/glew.h"
-#include "GLFW/glfw3.h"
+#include "core/extension.h"
 
-#include "ext_glfw/ext_glfw.h"
-
-#include "core/context.h"
+#include "gl_context.h"
+#include "gl_ssbo.h"
+#include "gl_program.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -19,64 +18,29 @@
 
 namespace lemon
 {
-    /**
-     * @brief Managed OpenGL context built on GLFW windows and GLEW bindings.
-     */
-    class gl_context : public context
+    class ext_opengl : public extension
     {
-    private:
-        /**
-         * @brief Keep at least one global GLFW context alive.
-         */
-        glfw_context global_glfw;
+        protected:
+            unsigned int version;
+            bool core, forward_compat;
 
-        /**
-         * @brief The GLFW window associated with this context.
-         */
-        GLFWwindow* window_handle = nullptr;
+        public:
+            ext_opengl(unsigned int major, unsigned int minor, bool core, bool forward_compat)
+            {
+                this->version = major * 10 + minor;
+                this->core = core;
+                this->forward_compat = forward_compat;
+            }
 
-        /**
-         * @brief OpenGL-context-specific logger instance.
-         */
-        logger log { "OpenGL" };
+            std::shared_ptr<context> create_context();
 
-        /**
-         * @brief A static flag of whether this context should close.
-         */
-        bool should_close = false;
-    
-    public:
-        /**
-         * @brief Construct a new OpenGL context with the given features.
-         * 
-         * @param major Major OpenGL version (e.g., 4 for OpenGL 4.3).
-         * @param minor Minor OpenGL version (e.g., 3 for OpenGL 4.3).
-         * @param core Whether this is a core profile (limits legacy features).
-         * @param forward_compat Whether this context should be forward compat.
-         */
-        gl_context(int major, int minor, bool core, bool forward_compat);
+            std::shared_ptr<shader_program> create_program(
+                std::shared_ptr<context> in_context,
+                std::string vert_src, 
+                std::string frag_src);
 
-        /**
-         * @brief Destroy the OpenGL context and associated window/resources.
-         */
-        ~gl_context();
-
-        /**
-         * @brief Updates the context, swaps the framebuffer, and polls input.
-         */
-        void update();
-
-        /**
-         * @brief Checks whether this context is currently alive.
-         * 
-         * @return true If this context is still active and alive.
-         * @return false If this context should be shut down.
-         */
-        bool is_alive();
-
-        /**
-         * @brief Marks that the context is inactive and should be shut down.
-         */
-        void kill();
+            std::shared_ptr<shader_buffer> create_buffer(
+                std::shared_ptr<context> in_context,
+                unsigned int index);
     };
 }

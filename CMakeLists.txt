@@ -80,7 +80,9 @@ target_link_libraries (LemonExt_GLFW LemonCore)
 add_library (LemonExt_OpenGL STATIC
     "ext_opengl/ext_opengl.h"
     "ext_opengl/ext_opengl.cpp"
-
+    
+    "ext_opengl/gl_context.h"
+    "ext_opengl/gl_context.cpp"
     "ext_opengl/gl_ssbo.h"
     "ext_opengl/gl_ssbo.cpp"
     "ext_opengl/gl_program.h"
