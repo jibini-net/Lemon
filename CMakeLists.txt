@@ -23,8 +23,6 @@ add_library (LemonCore STATIC
     "core/logger.h"
     "core/logger.cpp"
     "core/deque.h"
-    "core/latch.h"
-    "core/latch.cpp"
 
     "core/worker_thread.h"
     "core/worker_thread.cpp"

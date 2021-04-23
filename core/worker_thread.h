@@ -1,9 +1,9 @@
 #pragma once
 
 #include <atomic>
-#include <condition_variable>
 #include <functional>
 #include <mutex>
+#include <semaphore>
 #include <thread>
 
 #include "logger.h"
@@ -73,19 +73,9 @@ namespace lemon
         bool is_parked = false;
 
         /**
-         * Synchronization which allows the worker thread to wait and be
-         * notified once a new task is enqueued in the task queue.  This allows
-         * threads to sleep rather than infinitely poll the queue and waste CPU
-         * cycles doing nothing.
-         * 
-         * @brief Condition which, once notified, will start a queue execution.
+         * @brief Semaphore for adding and acquiring tasks in the queue.
          */
-        std::condition_variable execute_condition;
-
-        /**
-         * @brief Synchronization mutex for the execution conditional variable.
-         */
-        std::mutex execute_mutex;
+        std::counting_semaphore<512> semaphore { 0 };
 
         /**
          * @brief A logger instance for log messages related to this class.

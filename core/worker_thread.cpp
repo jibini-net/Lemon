@@ -3,7 +3,6 @@
 #include <chrono>
 
 #include "logger.h"
-#include "latch.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 //                          Lemon 3D Graphics Engine                          //
@@ -42,40 +41,24 @@ namespace lemon
         // Loop until the park flag is disabled (likely infinite)
         while (is_parked)
         {
-            while (execution_queue.size() == 0)
-            {
-                std::unique_lock<std::mutex> lock(this->execute_mutex);
-                if (execution_queue.size() == 0)
-                    this->execute_condition.wait(lock);
-            }
+            semaphore.acquire();
 
-            // Iterate over the entire queue until empty
-            this->execution_queue.consume([&](auto action)
+            try
             {
-                 try
-                {
-                    // Execute each queued task, first-in first-out
-                    action();
-                } catch(const std::exception& ex)
-                {
-                    auto error = ex.what();
-                    log.error(error);
-                }
-            });
+                this->execution_queue.poll()();
+            } catch(const std::exception& ex)
+            {
+                auto error = ex.what();
+                log.error(error);
+            }
         }
     }
 
     void worker_thread::execute(std::function<void()> task)
     {
-        while (!execute_mutex.try_lock())
-            execute_condition.notify_all();
-
-        //std::lock_guard<std::mutex> lock(this->execute_mutex);
         // Queue the provided task
         this->execution_queue.add(task);
-        execute_condition.notify_all();
-
-        execute_mutex.unlock();
+        semaphore.release();
     }
 
     void worker_thread::execute_wait(std::function<void()> task)
@@ -96,17 +79,17 @@ namespace lemon
             return;
         }
 
-        latch l(1);
+        std::binary_semaphore l { 0 };
 
         // Wrap the task with synchronization operations
         execute([&]()
         {
             task();
 
-            l.count_down();
+            l.release();
         });
 
-        l.wait();
+        l.acquire();
     }
 
     worker_pool::worker_pool(int num_workers)
