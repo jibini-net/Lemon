@@ -105,12 +105,12 @@ namespace lemon
                     {
                         // .transform = mat::ortho(-w, w, -h, h, -512.0f, 512.0f),
                         .transform = mat::perspective(14.0f / 9.0f, 3.14f / 2.0f, 0.1f, 512.0f),
-                        .diffuse =  { 1.0f, 1.0f, 1.0f, 1.0f },
+                        .diffuse =  { 0.9f, 0.7f, 0.4f, 1.0f },
 
-                        .diff = { 0.1f },
-                        .spec = { 1.9f },
-                        .spec_power = { 70.0f },
-                        .ambient = { 0.05f }
+                        .diff = { 0.3f },
+                        .spec = { 1.5f },
+                        .spec_power = { 20.0f },
+                        .ambient = { 0.35f }
                     };
                 });
 
@@ -118,7 +118,7 @@ namespace lemon
                 {
                     while (true)
                     {
-                        std::string fname = "models/xyzrgb_dragon.obj";
+                        std::string fname = "models/lucy.obj";
                         const float heuristic = 0.03575f * 1.25f;
                         long long model_size = std::filesystem::file_size(fname);
 

@@ -148,7 +148,7 @@ void main()
 
     // Set the interpolated fields
     position = (/* b.transform * m_model * */ v.position).xyz;
-    diffuse = v.diffuse;
+    diffuse = v.diffuse * b.diffuse;
     normal_vector = v.normal_vector;
     texture_coord = v.texture_coord;
 
@@ -157,7 +157,14 @@ void main()
     float angle = atan(pos.z, pos.x);
     pos.x = -len * sin(angle + time);
     pos.z = len * cos(angle + time);
-    pos.z -= 110.0;
+
+    pos.y -= 80.0;
+    pos.z -= 90.0;
+
+    // pos.z -= 110.0;
+
+    // pos.y -= 100.0;
+    // pos.z -= 220.0;
 
     len = length(normal_vector.xz);
     angle = atan(normal_vector.z, normal_vector.x);
