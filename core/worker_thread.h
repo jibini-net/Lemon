@@ -3,9 +3,9 @@
 #include <atomic>
 #include <functional>
 #include <mutex>
-#include <semaphore>
 #include <thread>
 
+#include "sem_polyfill.h"
 #include "logger.h"
 #include "deque.h"
 

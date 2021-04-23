@@ -18,8 +18,6 @@ namespace lemon
 {
     // Synchronization objects for awaiting task execution
     thread_local std::mutex await_mutex;
-    // Conditional variable for awaiting task execution
-    std::condition_variable await_condition;
 
     worker_thread::worker_thread(bool create_thread)
     {
@@ -79,7 +77,7 @@ namespace lemon
             return;
         }
 
-        std::binary_semaphore l { 0 };
+        std::counting_semaphore<1> l { 0 };
 
         // Wrap the task with synchronization operations
         execute([&]()
