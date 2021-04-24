@@ -116,109 +116,109 @@ namespace lemon
 
                 primary_pool.execute([&]()
                 {
-                    while (true)
+                    std::string fname = "models/lucy.obj";
+                    const float heuristic = 0.03575f * 1.25f;
+                    long long model_size = std::filesystem::file_size(fname);
+
+                    blocks_mut.lock(); //TODO
+                    blocks.clear();
+                    blocks_mut.unlock();
+
+                    static logger log("OBJ Loader");
+
+                    std::vector<vec3> vertices;
+                    vertices.reserve((int)(model_size * heuristic));
+                    std::vector<vec3> vertex_normals;
+                    vertex_normals.reserve((int)(model_size * heuristic));
+
+                    log.debug("Reserving heuristic buffer of "
+                        + std::to_string(vertices.capacity())
+                        + " vertices");
+
+                    render_data* current = new render_data;
+                    int i = 0;
+
+                    read_file(fname, false, [&](std::string line)
                     {
-                        std::string fname = "models/lucy.obj";
-                        const float heuristic = 0.03575f * 1.25f;
-                        long long model_size = std::filesystem::file_size(fname);
-
-                        blocks_mut.lock(); //TODO
-                        blocks.clear();
-                        blocks_mut.unlock();
-
-                        static logger log("OBJ Loader");
-
-                        std::vector<vec3> vertices;
-                        vertices.reserve((int)(model_size * heuristic));
-                        std::vector<vec3> vertex_normals;
-                        vertex_normals.reserve((int)(model_size * heuristic));
-
-                        log.debug("Reserving heuristic buffer of "
-                            + std::to_string(vertices.capacity())
-                            + " vertices");
-
-                        render_data* current = nullptr;
-                        int i = 0;
-
-                        read_file(fname, false, [&](std::string line)
+                        if (line.size() > 0)
                         {
-                            if (line.size() > 0)
+                            std::vector<std::string> elements, sub_elements;
+                            split_string(line, " ", elements);
+
+                            vec3 arr;
+
+                            switch (line[0])
                             {
-                                std::vector<std::string> elements, sub_elements;
-                                split_string(line, " ", elements);
+                                case 'v':
+                                    arr.x = strtof(elements[1].c_str(), NULL);
+                                    arr.y = strtof(elements[2].c_str(), NULL);
+                                    arr.z = strtof(elements[3].c_str(), NULL);
 
-                                vec3 arr;
-
-                                switch (line[0])
-                                {
-                                    case 'v':
-                                        arr.x = strtof(elements[1].c_str(), NULL);
-                                        arr.y = strtof(elements[2].c_str(), NULL);
-                                        arr.z = strtof(elements[3].c_str(), NULL);
-
-                                        if (line[1] == 'n')
-                                            vertex_normals.push_back(arr);
-                                        else
-                                            vertices.push_back(vec3
-                                            {
-                                                arr.x, arr.y, arr.z
-                                            });
-                                        break;
-
-                                    case 'f':
-                                        if (current == nullptr || i == MESH_BLOCK_SIZE)
+                                    if (line[1] == 'n')
+                                        vertex_normals.push_back(arr);
+                                    else
+                                        vertices.push_back(vec3
                                         {
-                                            log.debug("Allocating next mesh block of "
-                                                + std::to_string(MESH_BLOCK_SIZE)
-                                                + " vertices");
+                                            arr.x, arr.y, arr.z
+                                        });
+                                    break;
 
-                                            if (blocks.size() > 0)
-                                                blocks.back()->unmap();
+                                case 'f':
+                                    if (current == nullptr || i == MESH_BLOCK_SIZE)
+                                    {
+                                        log.debug("Allocating next mesh block of "
+                                            + std::to_string(MESH_BLOCK_SIZE)
+                                            + " vertices");
 
-                                            blocks.push_back(ext->create_buffer(app_context, 0));
+                                        // if (blocks.size() > 0)
+                                        //     blocks.back()->unmap();
 
-                                            blocks.back()->put(new render_data, sizeof(render_data));
-                                            current = blocks.back()->map_typed<render_data>(true, true);
+                                        blocks.push_back(ext->create_buffer(app_context, 0));
+                                        blocks.back()->put(current, sizeof(render_data));
+                                        
+                                        current = new render_data;//blocks.back()->map_typed<render_data>(true, true);
 
-                                            i = 0;
-                                        }
+                                        i = 0;
+                                    }
 
-                                        for (int j = 0; j < 3; j++)
+                                    for (int j = 0; j < 3; j++)
+                                    {
+                                        sub_elements.clear();
+                                        split_string(elements[j + 1], "/", sub_elements);
+
+                                        auto vert = vertices[strtol(sub_elements[0].c_str(), NULL, 10) - 1];
+                                        auto norm = vertex_normals[strtol(sub_elements[2].c_str(), NULL, 10) - 1];
+
+                                        current->vertices[i++] =
                                         {
-                                            sub_elements.clear();
-                                            split_string(elements[j + 1], "/", sub_elements);
-
-                                            auto vert = vertices[strtol(sub_elements[0].c_str(), NULL, 10) - 1];
-                                            auto norm = vertex_normals[strtol(sub_elements[2].c_str(), NULL, 10) - 1];
-
-                                            current->vertices[i++] =
-                                            {
-                                                .position = { vert.x, vert.y, vert.z, 1.0f },
-                                                .diffuse = { 1.0f, 1.0f, 1.0f, 1.0f },
-                                                .normal_vector = { norm.x,  norm.y,  norm.z }, 
-                                                .texture_coord = { 0.0f,  1.0f },
-                                                .body_index = { 0U }
-                                            };
-                                        }
-                                }
+                                            .position = { vert.x, vert.y, vert.z, 1.0f },
+                                            .diffuse = { 1.0f, 1.0f, 1.0f, 1.0f },
+                                            .normal_vector = { norm.x,  norm.y,  norm.z }, 
+                                            .texture_coord = { 0.0f,  1.0f },
+                                            .body_index = { 0U }
+                                        };
+                                    }
                             }
-                        });
-
-                        log.info("Mesh loaded with "
-                            + std::to_string((blocks.size() - 1) * MESH_BLOCK_SIZE + i)
-                            + " vertices ("
-                            + std::to_string(blocks.size())
-                            + " allocated blocks)");
-                        
-                        // Unmap the last unfilled buffer if there is one
-                        if (blocks.size() > 0)
-                        {
-                            current->num_vertices = i;
-                            blocks.back()->unmap();
                         }
+                    });
 
-                        std::this_thread::sleep_for(std::chrono::seconds(10));
+                    log.info("Mesh loaded with "
+                        + std::to_string((blocks.size() - 1) * MESH_BLOCK_SIZE + i)
+                        + " vertices ("
+                        + std::to_string(blocks.size())
+                        + " allocated blocks)");
+                    
+                    // Unmap the last unfilled buffer if there is one
+                    if (blocks.size() > 0)
+                    {
+                        current->num_vertices = i;
+                        // blocks.back()->unmap();
+
+                        blocks.push_back(ext->create_buffer(app_context, 0));
+                        blocks.back()->put(current, sizeof(render_data));
                     }
+
+                    std::this_thread::sleep_for(std::chrono::seconds(10));
                 });
 
             }

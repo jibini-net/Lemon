@@ -96,7 +96,7 @@ namespace lemon
             glFlush();
 
             this->should_close |= (bool)glfwWindowShouldClose(this->window_handle);
-            glfwSwapInterval(false);
+            glfwSwapInterval(true);
             glfwSwapBuffers(this->window_handle);
 
             glClear(GL_COLOR_BUFFER_BIT);
