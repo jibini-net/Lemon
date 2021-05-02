@@ -24,3 +24,25 @@
 **/*.out
 **/*.a
 **/*.so
+
+# Gradle configuration and compile output
+**/.gradle/
+**/build/
+**/bin/
+
+# Eclipse-specific project files and configuration
+.classpath
+.project
+.settings/
+
+# General file formats to ignore committing
+*.log
+*.temp
+*.out
+*.jar
+# But include the Gradle wrapper
+!gradle/wrapper/gradle-wrapper.jar
+
+# IntelliJ project directories and compile output
+**/.idea/
+**/out/
