@@ -4,6 +4,9 @@ import net.jibini.lemon.concurrency.Worker
 
 import org.slf4j.LoggerFactory
 
+import kotlin.concurrent.thread
+import kotlin.system.exitProcess
+
 /**
  * Collection of static states and bootstrap operations. This object will start
  * up the application, creating basic resources such as a graphical context and
@@ -58,13 +61,34 @@ object Lemon
     @JvmStatic
     val PRIMARY_POOL = Worker.createPool()
 
-    fun start(/* vararg applications */)
+    fun start(vararg applications: Application)
     {
-        Thread.currentThread().name = "Main Worker"
-
         MAIN_THREAD.perform({
             log.debug("Main thread has been consumed and will hang indefinitely")
         }, false)
+
+        Thread.currentThread().name = "Main Worker"
+        val appThreads = mutableListOf<Thread>()
+
+        for (app in applications)
+            appThreads += thread(name = "Application", start = true)
+            {
+                app.start()
+                while (app.context.alive)
+                    app.update()
+
+                app.destroy()
+                app.context.destroy()
+            }
+
+        thread(name = "Shutdown", start = true)
+        {
+            for (thread in appThreads)
+                thread.join()
+
+            log.info("All applications have exited")
+            MAIN_THREAD.perform({ exitProcess(0) }, wait = true)
+        }
 
         MAIN_THREAD.useThisThread()
     }

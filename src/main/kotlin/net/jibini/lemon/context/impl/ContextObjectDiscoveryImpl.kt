@@ -3,7 +3,7 @@ package net.jibini.lemon.context.impl
 import io.github.classgraph.ClassGraph
 
 import net.jibini.lemon.context.ContextExtension
-import net.jibini.lemon.context.ContextObject
+import net.jibini.lemon.context.RegisterForContext
 
 import org.slf4j.LoggerFactory
 
@@ -31,17 +31,17 @@ object ContextObjectDiscoveryImpl
      * A convenience class which is a collection of implementations for a
      * specific context type.
      */
-    private class ContextObjects : MutableMap<KClass<out Any>, Class<out Any>> by ConcurrentHashMap()
+    class ContextObjects : MutableMap<KClass<out Any>, Class<out Any>> by ConcurrentHashMap()
 
     /**
      * Map of context types to all implementation classes for those contexts.
      */
-    private val discoveredObjects = ConcurrentHashMap<KClass<out ContextExtension>, ContextObjects>()
+    val discoveredObjects = ConcurrentHashMap<KClass<out ContextExtension>, ContextObjects>()
 
     init
     {
         // Perform classpath search for annotated classes
-        val annotationName = ContextObject::class.jvmName
+        val annotationName = RegisterForContext::class.jvmName
         val annotated = ClassGraph()
             .enableClassInfo()
             .enableAnnotationInfo()
@@ -52,7 +52,7 @@ object ContextObjectDiscoveryImpl
         {
             // Load class and annotation
             val c = o.loadClass()
-            val a = c.getAnnotationsByType(ContextObject::class.java)[0]
+            val a = c.getAnnotationsByType(RegisterForContext::class.java)[0]
 
             log.debug("Found context implementation '{}' for object type '{}' in '{}'",
                 c.simpleName,
@@ -77,5 +77,36 @@ object ContextObjectDiscoveryImpl
         // Place implementation in context's collection
         val objects = discoveredObjects.getOrPut(context) { ContextObjects() }
         objects[`object`] = impl
+    }
+
+    /**
+     * Searches the cached implementations in order to create an instance of the
+     * requested object type with the correct implementation for the specified
+     * context type.
+     *
+     * @param context An instance of the class type of the context whose
+     *      implementation to use; this must be the exact class of the context
+     *      extension, not a sub- or super-class.
+     * @param T Type of the object to create. It is reified in order to access
+     *      the correct cached implementation by class.
+     * @return An instance of the proper implementation for the requested type.
+     * @throws NoSuchMethodException If the cached implementation does not have
+     *      a single-argument constructor (the context only).
+     * @throws RuntimeException If no cached implementation class can be found
+     *      for the requested context or object type.
+     */
+    inline fun <reified T : Any> createInstance(context: ContextExtension): T
+    {
+        val objects = discoveredObjects.getOrElse(context::class)
+        {
+            throw RuntimeException("No implementations for requested context type")
+        }
+
+        return objects.getOrElse(T::class)
+        {
+            throw RuntimeException("No implementations for requested context and object type")
+        }
+            .getConstructor(ContextExtension::class.java)
+            .newInstance(context) as T
     }
 }
