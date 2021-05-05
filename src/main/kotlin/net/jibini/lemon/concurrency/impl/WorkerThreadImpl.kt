@@ -36,6 +36,12 @@ class WorkerThreadImpl(bufferSize: Int) : Worker
     private val mutex = Mutex()
 
     /**
+     * The thread which currently holds the mutex lock; used to avoid hard locks
+     * in a manner similar to a recursive mutex.
+     */
+    private var mutexHolder: Thread? = null
+
+    /**
      * Task buffer as represented by an array of functions; the array is
      * allocated once at initialization and is reused as task indices wrap
      * around.
@@ -100,14 +106,23 @@ class WorkerThreadImpl(bufferSize: Int) : Worker
         }
 
         runBlocking {
-            // Wait for a task to be written to the buffer
+            // Wait for an empty task slot in the buffer
             availableSlots.acquire()
 
-            mutex.withLock {
+            val t =
+            {
                 // Write the provided task to the buffer
                 buffer[indexIn++] = task
                 indexIn %= buffer.size
             }
+
+            if (mutexHolder == Thread.currentThread()) t()
+            else
+                mutex.withLock {
+                    mutexHolder = Thread.currentThread()
+                    t()
+                    mutexHolder = null
+                }
         }
 
         // Signal that a new task is available in the buffer
@@ -121,14 +136,16 @@ class WorkerThreadImpl(bufferSize: Int) : Worker
         alive = true
 
         // Loop until the thread is no longer active
+        //TODO INTERRUPT ON DEATH
         while (alive)
         {
             runBlocking {
-                // Wait for an empty task slot in the buffer
+                // Wait for a task to be written to the buffer
                 availableTasks.acquire()
 
-                mutex.withLock {
-                    // Execute and remove a task from the buffer
+                val t =
+                {
+                    // Remove a task from the buffer
                     val task = buffer[indexOut]
                     buffer[indexOut++] = null
                     indexOut %= buffer.size
@@ -142,6 +159,14 @@ class WorkerThreadImpl(bufferSize: Int) : Worker
                         log.error("Error occurred in posted worker thread task", ex)
                     }
                 }
+
+                if (mutexHolder == Thread.currentThread()) t()
+                else
+                    mutex.withLock {
+                        mutexHolder = Thread.currentThread()
+                        t()
+                        mutexHolder = null
+                    }
             }
 
             // Signal that another buffer slot is open

@@ -1,12 +1,13 @@
 package net.jibini.lemon.opengl
 
+import net.jibini.lemon.Lemon
 import net.jibini.lemon.Window
 import net.jibini.lemon.context.impl.ContextObjectDiscoveryImpl
 import net.jibini.lemon.glfw.GLFWContext
-import net.jibini.lemon.glfw.GLFWGlobal
 import net.jibini.lemon.glfw.GLFWWindow
 
 import org.lwjgl.glfw.GLFW
+import org.lwjgl.opengl.GL
 
 /**
  * An OpenGL context with a specified context version. This context extension
@@ -18,37 +19,61 @@ import org.lwjgl.glfw.GLFW
  *
  * @author Zach Goethel
  */
-class OpenGL(major: Int, minor: Int) : GLFWContext()
+class OpenGL(private val major: Int, private val minor: Int) : GLFWContext()
 {
     override val pointer: Long
+        get() = invisibleWindow
+
+    /**
+     * Context's main window which is invisible but persists any changes to the
+     * visible UI window.
+     */
+    private var invisibleWindow = 0L
 
     init
     {
-        GLFWGlobal.count++
-
         ContextObjectDiscoveryImpl.registerImplementation(this::class, Window::class, GLFWWindow::class.java)
 
-        //TODO STORE FLAGS IN GLFWContext or Window FOR WINDOW RE-CREATION
-        GLFW.glfwDefaultWindowHints()
-        GLFW.glfwWindowHint(GLFW.GLFW_VERSION_MAJOR, major);
-        GLFW.glfwWindowHint(GLFW.GLFW_VERSION_MINOR, major);
-        GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
+        Lemon.MAIN_THREAD.perform(this::contextInit, wait = false)
+    }
+
+    /**
+     * Initialization functionality which must be executed on the main thread.
+     */
+    private fun contextInit()
+    {
+        windowHints[GLFW.GLFW_CONTEXT_VERSION_MAJOR] = major
+        windowHints[GLFW.GLFW_CONTEXT_VERSION_MINOR] = minor
+        windowHints[GLFW.GLFW_VISIBLE] = GLFW.GLFW_FALSE
 
         if ((major > 3) || (major == 3 && minor >= 3))
         {
-            GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
-            GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE)
+            windowHints[GLFW.GLFW_OPENGL_PROFILE] = GLFW.GLFW_OPENGL_CORE_PROFILE
+            windowHints[GLFW.GLFW_OPENGL_FORWARD_COMPAT] = GLFW.GLFW_TRUE
         }
 
-        //TODO MOVE INTO WINDOW
-        pointer = GLFW.glfwCreateWindow(800, 600, "Window", 0L, 0L)
+        GLFW.glfwDefaultWindowHints()
+        for ((k, v) in windowHints)
+            GLFW.glfwWindowHint(k, v)
+
+        // Create context with hidden window
+        invisibleWindow = GLFW.glfwCreateWindow(8, 8, "Context", 0L, 0L)
+        // Create actual backend context
+        GLFW.glfwMakeContextCurrent(pointer)
+        GL.createCapabilities()
+        // Relinquish on main thread (required)
+        GLFW.glfwMakeContextCurrent(0L)
     }
 
     override fun destroy()
     {
-        GLFWGlobal.count--
+        Lemon.MAIN_THREAD.perform({
+            GLFW.glfwDestroyWindow(invisibleWindow)
+        }, wait = false)
+
+        super.destroy()
     }
 
     override val alive: Boolean
-        get() = !shouldClose
+        get() { print(""); return !shouldClose }
 }

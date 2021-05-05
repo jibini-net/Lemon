@@ -3,6 +3,8 @@ package net.jibini.lemon
 import net.jibini.lemon.context.ContextExtension
 import net.jibini.lemon.context.impl.ContextObject
 
+import java.util.concurrent.CopyOnWriteArrayList
+
 /**
  * An application window. This is the interface with the user which is seen in
  * their OS.
@@ -37,4 +39,35 @@ abstract class Window(context: ContextExtension) : ContextObject(context)
      * Height of the window or window framebuffer in pixels.
      */
     abstract var height: Int
+
+    /**
+     * Swaps the window's buffers to display the next rendered frame.
+     */
+    abstract fun swapBuffers()
+
+    /**
+     * Thread-safe collection of tasks to run when the window should be closed.
+     */
+    private val onCloseFunctions = CopyOnWriteArrayList<() -> Unit>()
+
+    /**
+     * The provided action will be invoked when the window is requested to be
+     * closed or is closed.
+     *
+     * @param action Action function to run when the window closes.
+     */
+    fun onClose(action: () -> Unit)
+    {
+        onCloseFunctions += action
+    }
+
+    /**
+     * Runs all of the registered [onClose] functions in the order they were
+     * added to the collection.
+     */
+    fun invokeOnCloseFunctions()
+    {
+        for (function in onCloseFunctions)
+            function()
+    }
 }

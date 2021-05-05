@@ -15,16 +15,23 @@ import java.lang.UnsupportedOperationException
 abstract class GLFWContext : ContextExtension()
 {
     /**
+     * Stored window flags for recreating and modifying windows mid-runtime.
+     */
+    val windowHints = mutableMapOf<Int, Int>()
+
+    /**
      * Tracks how many GLFW windows are active on this GLFW context.
      */
     var windowCount = 0
         set(value)
         {
+            field = value
+
             // Currently, GLFW-based contexts only support one window
             if (value > 1)
                 throw UnsupportedOperationException("GLFW contexts may only have a single window")
-
-            field = value
+            if (value == 0)
+                shouldClose = true
         }
 
     /**
