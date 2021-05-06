@@ -41,6 +41,12 @@ abstract class Window(context: ContextExtension) : ContextObject(context)
     abstract var height: Int
 
     /**
+     * Whether a buffer swap should wait for a monitor vertical sync, thus
+     * reducing tearing in the output image.
+     */
+    abstract var verticalSync: Boolean
+
+    /**
      * Swaps the window's buffers to display the next rendered frame.
      */
     abstract fun swapBuffers()

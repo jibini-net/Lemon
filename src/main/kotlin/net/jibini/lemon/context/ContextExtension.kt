@@ -36,4 +36,15 @@ abstract class ContextExtension : Destroyable
      * in "working" condition, check this flag before attempting to use it.
      */
     abstract val alive: Boolean
+
+    /**
+     * Executes the provided task within the graphical context. It will be
+     * posted for execution in a thread with the correct states for executing
+     * this context's operations.
+     *
+     * @param task Task to execute within this context.
+     * @param wait Whether this call should hang until the task has been
+     *      executed within the target context.
+     */
+    abstract fun perform(task: () -> Unit, wait: Boolean = false)
 }

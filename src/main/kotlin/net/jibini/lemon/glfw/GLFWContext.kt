@@ -1,5 +1,10 @@
 package net.jibini.lemon.glfw
 
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+import net.jibini.lemon.concurrency.Worker
 import net.jibini.lemon.context.ContextExtension
 
 import java.lang.UnsupportedOperationException
@@ -14,6 +19,13 @@ import java.lang.UnsupportedOperationException
  */
 abstract class GLFWContext : ContextExtension()
 {
+    /**
+     * Worker which is dedicated to performing context-related tasks. The
+     * context remains current in this thread, allowing threads to post tasks
+     * despite them not having active contexts.
+     */
+    val worker = Worker.create()
+
     /**
      * Stored window flags for recreating and modifying windows mid-runtime.
      */
@@ -45,6 +57,12 @@ abstract class GLFWContext : ContextExtension()
      */
     var shouldClose = false
 
+    /**
+     * Mutex which represents the context availability; if all permits are
+     * claimed, the context is not yet ready.
+     */
+    val contextActive = Mutex(locked = true)
+
     init
     {
         GLFWGlobal.count++
@@ -52,6 +70,16 @@ abstract class GLFWContext : ContextExtension()
 
     override fun destroy()
     {
+        worker.destroy()
         GLFWGlobal.count--
+    }
+
+    final override fun perform(task: () -> Unit, wait: Boolean)
+    {
+        runBlocking {
+            contextActive.withLock {
+                worker.perform(task, wait)
+            }
+        }
     }
 }

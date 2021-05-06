@@ -17,6 +17,9 @@ import org.lwjgl.opengl.GL
  * Context versions greater than or equal to 3.3 will be marked as core and
  * forward compatible. This may disable legacy features of OpenGL.
  *
+ * @property major OpenGL context version major component.
+ * @property minor OpenGL context version minor component.
+ *
  * @author Zach Goethel
  */
 class OpenGL(private val major: Int, private val minor: Int) : GLFWContext()
