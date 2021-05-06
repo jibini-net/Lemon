@@ -24,14 +24,9 @@ import org.lwjgl.opengl.GL
  */
 class OpenGL(private val major: Int, private val minor: Int) : GLFWContext()
 {
+    private var _pointer = 0L
     override val pointer: Long
-        get() = invisibleWindow
-
-    /**
-     * Context's main window which is invisible but persists any changes to the
-     * visible UI window.
-     */
-    private var invisibleWindow = 0L
+        get() = _pointer
 
     init
     {
@@ -60,7 +55,7 @@ class OpenGL(private val major: Int, private val minor: Int) : GLFWContext()
             GLFW.glfwWindowHint(k, v)
 
         // Create context with hidden window
-        invisibleWindow = GLFW.glfwCreateWindow(8, 8, "Context", 0L, 0L)
+        _pointer = GLFW.glfwCreateWindow(8, 8, "Context", 0L, 0L)
         // Create actual backend context
         GLFW.glfwMakeContextCurrent(pointer)
         GL.createCapabilities()
@@ -71,7 +66,7 @@ class OpenGL(private val major: Int, private val minor: Int) : GLFWContext()
     override fun destroy()
     {
         Lemon.MAIN_THREAD.perform({
-            GLFW.glfwDestroyWindow(invisibleWindow)
+            GLFW.glfwDestroyWindow(_pointer)
         }, wait = false)
 
         super.destroy()
