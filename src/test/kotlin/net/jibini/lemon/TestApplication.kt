@@ -2,11 +2,6 @@ package net.jibini.lemon
 
 import net.jibini.lemon.opengl.OpenGL
 
-fun main()
-{
-    Lemon.start(TestApplication)
-}
-
 object TestApplication : Application
 {
     override val context = OpenGL(4, 6)
@@ -34,4 +29,9 @@ object TestApplication : Application
     {
         window.destroy()
     }
+}
+
+fun main()
+{
+    Lemon.start(TestApplication)
 }

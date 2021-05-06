@@ -7,8 +7,6 @@ import net.jibini.lemon.context.RegisterForContext
 
 import org.lwjgl.glfw.GLFW
 
-import java.util.concurrent.CopyOnWriteArrayList
-
 /**
  * Implementation of the [Window] type for any context which uses GLFW. Only one
  * window may exist at a time for a GLFW-based context, but this is subject to
