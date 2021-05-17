@@ -116,7 +116,7 @@ namespace lemon
 
                 primary_pool.execute([&]()
                 {
-                    std::string fname = "models/lucy.obj";
+                    std::string fname = "models/xyzrgb_dragon.obj";
                     const float heuristic = 0.03575f * 1.25f;
                     long long model_size = std::filesystem::file_size(fname);
 
@@ -175,7 +175,7 @@ namespace lemon
 
                                         blocks.push_back(ext->create_buffer(app_context, 0));
                                         blocks.back()->put(current, sizeof(render_data));
-                                        
+
                                         current = new render_data;//blocks.back()->map_typed<render_data>(true, true);
 
                                         i = 0;
@@ -212,13 +212,13 @@ namespace lemon
                     if (blocks.size() > 0)
                     {
                         current->num_vertices = i;
-                        // blocks.back()->unmap();
+                        //blocks.back()->unmap();
 
                         blocks.push_back(ext->create_buffer(app_context, 0));
                         blocks.back()->put(current, sizeof(render_data));
                     }
 
-                    std::this_thread::sleep_for(std::chrono::seconds(10));
+                    //std::this_thread::sleep_for(std::chrono::seconds(10));
                 });
 
             }

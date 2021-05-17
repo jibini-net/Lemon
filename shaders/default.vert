@@ -158,13 +158,16 @@ void main()
     pos.x = -len * sin(angle + time);
     pos.z = len * cos(angle + time);
 
-    pos.y -= 80.0;
-    pos.z -= 90.0;
+    // LUCY
+    //pos.y -= 80.0;
+    //pos.z -= 90.0;
 
-    // pos.z -= 110.0;
+    // DRAGON
+    pos.z -= 110.0;
 
-    // pos.y -= 100.0;
-    // pos.z -= 220.0;
+    // STATUETTE
+    //pos.y -= 100.0;
+    //pos.z -= 220.0;
 
     len = length(normal_vector.xz);
     angle = atan(normal_vector.z, normal_vector.x);

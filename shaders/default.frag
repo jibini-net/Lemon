@@ -144,5 +144,10 @@ void main()
     float d = b.diff * pow(c, 2.0);
     float s = b.spec * pow(c, b.spec_power);
 
-    color = vec4(vec3(a + d + s), 1.0) * diffuse;// * texture2D(texture, texture_coord);
+    s -= max(0.0, pow(normal_vector.y, 2)) * 1.2;
+
+    color = vec4(vec3(a + max(0.0, d + s)), 1.0) * diffuse;// * texture2D(texture, texture_coord);
+
+    color.r += max(0.0, pow(normal_vector.y, 5)) * 0.3;
+    color.g += max(0.0, pow(normal_vector.y, 5)) * 0.2;
 }
