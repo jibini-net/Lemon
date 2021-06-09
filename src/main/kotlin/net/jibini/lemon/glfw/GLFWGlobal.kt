@@ -6,8 +6,6 @@ import org.lwjgl.glfw.GLFW
 
 import org.slf4j.LoggerFactory
 
-import java.lang.RuntimeException
-
 import kotlin.concurrent.thread
 
 /**
