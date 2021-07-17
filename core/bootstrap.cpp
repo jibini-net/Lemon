@@ -110,7 +110,7 @@ namespace lemon
                         .diff = { 0.3f },
                         .spec = { 1.5f },
                         .spec_power = { 20.0f },
-                        .ambient = { 0.35f }
+                        .ambient = { 0.14f }
                     };
                 });
 
@@ -229,7 +229,7 @@ namespace lemon
                 app_context->perform([]()
                 {
                     glViewport(0, 0, 1400, 900);
-                    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+                    glClearColor(0.1f, 0.06f, 0.0f, 1.0f);
 
                     glEnable(GL_DEPTH_TEST);
                     glClear(GL_DEPTH_BUFFER_BIT);

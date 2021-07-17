@@ -15,36 +15,35 @@
 #elif __unix__
     #include <semaphore.h>
 
-    namespace std
-    {
-        template <unsigned int N>
-    class counting_semaphore
-    {
-        private:
-            sem_t sem;
+    // namespace std
+    // {
+    //     class counting_semaphore
+    //     {
+    //         private:
+    //             sem_t sem;
 
-        public:
-            counting_semaphore(int init)
-            {
-                sem_init(&sem, 0, N);
-                for (int i = init; i < N; i++)
-                    sem_wait(&sem);
-            }
+    //         public:
+    //             counting_semaphore(int n, int init)
+    //             {
+    //                 sem_init(&sem, 0, n);
+    //                 for (int i = init; i < n; i++)
+    //                     sem_wait(&sem);
+    //             }
 
-            ~counting_semaphore()
-            {
-                sem_destroy(&sem);
-            }
+    //             ~counting_semaphore()
+    //             {
+    //                 sem_destroy(&sem);
+    //             }
 
-            void acquire()
-            {
-                sem_wait(&sem);
-            }
+    //             void acquire()
+    //             {
+    //                 sem_wait(&sem);
+    //             }
 
-            void release()
-            {
-                sem_post(&sem);
-            }
-        };
-    }
+    //             void release()
+    //             {
+    //                 sem_post(&sem);
+    //             }
+    //     };
+    // }
 #endif
