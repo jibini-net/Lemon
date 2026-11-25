@@ -32,7 +32,7 @@ namespace lemon
         if (is_parked.exchange(true))
             throw std::runtime_error("Cannot park a single worker thread more than once concurrently");
 
-        thread_id.store(std::this_thread::get_id());
+        thread_id = std::this_thread::get_id();
 
         while (is_parked.load())
         {
@@ -43,7 +43,8 @@ namespace lemon
 
             try
             {
-                this->execution_queue.poll()();
+                auto task = this->execution_queue.poll();
+                (*task)();
             } catch(const std::exception& ex)
             {
                 auto error = ex.what();
@@ -52,38 +53,36 @@ namespace lemon
         }
     }
 
-    void worker_thread::execute(std::function<void()> task)
+    void worker_thread::execute_impl(std::shared_ptr<std::function<void()>> task)
     {
-        this->execution_queue.add(task);
+        this->execution_queue.add(std::move(task));
         semaphore.release();
     }
 
-    void worker_thread::execute_wait(std::function<void()> task)
+    void worker_thread::execute_wait_impl(std::shared_ptr<std::function<void()>> task)
     {
-        if (std::this_thread::get_id() == thread_id.load())
+        if (std::this_thread::get_id() == thread_id)
         {
             try
             {
-                task();
+                (*task)();
             } catch(const std::exception& ex)
             {
                 auto error = ex.what();
                 log.error(error);
             }
-            
+
             return;
         }
 
         std::counting_semaphore<1> l { 0 };
 
-        execute([&]()
+        auto wrapper = std::make_shared<std::function<void()>>([f = std::move(task), &l]() mutable
         {
-            task();
-
+            (*f)();
             l.release();
         });
-
-        l.acquire();
+        execute_impl(wrapper);
     }
 
     worker_pool::worker_pool(int num_workers)
@@ -103,11 +102,5 @@ namespace lemon
             worker.reset();
         }
         workers.clear();
-    }
-
-    void worker_pool::execute(std::function<void()> task)
-    {
-        auto worker_index = this->round_robin.fetch_add(1) % (int)this->workers.size();
-        this->workers[worker_index]->execute(task);
     }
 }

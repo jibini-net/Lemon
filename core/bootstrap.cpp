@@ -67,6 +67,7 @@ namespace lemon
             std::vector<std::shared_ptr<shader_buffer>> blocks;
 
             std::future<void> obj_loader_future;
+            std::shared_ptr<std::promise<void>> obj_loader_promise;
 
         public:
             bootstrap() : application(EXT)
@@ -111,117 +112,122 @@ namespace lemon
                     };
                 });
 
-                std::promise<void> obj_loader_promise;
-                obj_loader_future = obj_loader_promise.get_future();
+                obj_loader_promise = std::make_shared<std::promise<void>>();
+                obj_loader_future = obj_loader_promise->get_future();
 
-                primary_pool.execute([&, p = std::move(obj_loader_promise)]() mutable
                 {
-                    std::string fname = "models/xyzrgb_dragon.obj";
-                    const float heuristic = 0.03575f * 1.25f;
-                    long long model_size = std::filesystem::file_size(fname);
+                    auto ext_ptr = ext;
+                    auto ctx_ptr = app_context;
 
+                    primary_pool.execute([blocks = &blocks, ext = ext_ptr, ctx = ctx_ptr, p = obj_loader_promise]()
                     {
-                        std::lock_guard<std::mutex> lock(blocks_mut);
-                        blocks.clear();
-                    }
-
-                    static logger log("OBJ Loader");
-
-                    std::vector<vec3> vertices;
-                    vertices.reserve((int)(model_size * heuristic));
-                    std::vector<vec3> vertex_normals;
-                    vertex_normals.reserve((int)(model_size * heuristic));
-
-                    log.debug("Reserving heuristic buffer of "
-                        + std::to_string(vertices.capacity())
-                        + " vertices");
-
-                    render_data current;
-                    int i = 0;
-
-                    read_file(fname, false, [&](std::string line)
-                    {
-                        if (line.size() > 0)
-                        {
-                            std::vector<std::string> elements, sub_elements;
-                            split_string(line, " ", elements);
-
-                            vec3 arr;
-
-                            switch (line[0])
-                            {
-                                case 'v':
-                                    arr.x = strtof(elements[1].c_str(), NULL);
-                                    arr.y = strtof(elements[2].c_str(), NULL);
-                                    arr.z = strtof(elements[3].c_str(), NULL);
-
-                                    if (line[1] == 'n')
-                                        vertex_normals.push_back(arr);
-                                    else
-                                        vertices.push_back(vec3
-                                        {
-                                            arr.x, arr.y, arr.z
-                                        });
-                                    break;
-
-                                case 'f':
-                                    if (i == MESH_BLOCK_SIZE)
-                                    {
-                                        log.debug("Allocating next mesh block of "
-                                            + std::to_string(MESH_BLOCK_SIZE)
-                                            + " vertices");
-
-                                        {
-                                            std::lock_guard<std::mutex> lock(blocks_mut);
-                                            blocks.push_back(ext->create_buffer(app_context, 0));
-                                            blocks.back()->put(&current, sizeof(render_data));
-                                        }
-
-                                        current = render_data();
-
-                                        i = 0;
-                                    }
-
-                                    for (int j = 0; j < 3; j++)
-                                    {
-                                        sub_elements.clear();
-                                        split_string(elements[j + 1], "/", sub_elements);
-
-                                        auto vert = vertices[strtol(sub_elements[0].c_str(), NULL, 10) - 1];
-                                        auto norm = vertex_normals[strtol(sub_elements[2].c_str(), NULL, 10) - 1];
-
-                                        current.vertices[i++] =
-                                        {
-                                            .position = { vert.x, vert.y, vert.z, 1.0f },
-                                            .diffuse = { 1.0f, 1.0f, 1.0f, 1.0f },
-                                            .normal_vector = { norm.x,  norm.y,  norm.z }, 
-                                            .texture_coord = { 0.0f,  1.0f },
-                                            .body_index = { 0U }
-                                        };
-                                    }
-                            }
-                        }
-                    });
-
-                    log.info("Mesh loaded with "
-                        + std::to_string((blocks.size() - 1) * MESH_BLOCK_SIZE + i)
-                        + " vertices ("
-                        + std::to_string(blocks.size())
-                        + " allocated blocks)");
-                    
-                    if (!blocks.empty())
-                    {
-                        current.num_vertices = i;
+                        std::string fname = "models/xyzrgb_dragon.obj";
+                        const float heuristic = 0.03575f * 1.25f;
+                        long long model_size = std::filesystem::file_size(fname);
 
                         {
                             std::lock_guard<std::mutex> lock(blocks_mut);
-                            blocks.push_back(ext->create_buffer(app_context, 0));
-                            blocks.back()->put(&current, sizeof(render_data));
+                            blocks->clear();
                         }
-                    }
 
-                    p.set_value();
-                });
+                        static logger log("OBJ Loader");
+
+                        std::vector<vec3> vertices;
+                        vertices.reserve((int)(model_size * heuristic));
+                        std::vector<vec3> vertex_normals;
+                        vertex_normals.reserve((int)(model_size * heuristic));
+
+                        log.debug("Reserving heuristic buffer of "
+                            + std::to_string(vertices.capacity())
+                            + " vertices");
+
+                        render_data current;
+                        int i = 0;
+
+                        read_file(fname, false, [&](std::string line)
+                        {
+                            if (line.size() > 0)
+                            {
+                                std::vector<std::string> elements, sub_elements;
+                                split_string(line, " ", elements);
+
+                                vec3 arr;
+
+                                switch (line[0])
+                                {
+                                    case 'v':
+                                        arr.x = strtof(elements[1].c_str(), NULL);
+                                        arr.y = strtof(elements[2].c_str(), NULL);
+                                        arr.z = strtof(elements[3].c_str(), NULL);
+
+                                        if (line[1] == 'n')
+                                            vertex_normals.push_back(arr);
+                                        else
+                                            vertices.push_back(vec3
+                                            {
+                                                arr.x, arr.y, arr.z
+                                            });
+                                        break;
+
+                                    case 'f':
+                                        if (i == MESH_BLOCK_SIZE)
+                                        {
+                                            log.debug("Allocating next mesh block of "
+                                                + std::to_string(MESH_BLOCK_SIZE)
+                                                + " vertices");
+
+                                            {
+                                                std::lock_guard<std::mutex> lock(blocks_mut);
+                                                blocks->push_back(ext->create_buffer(ctx, 0));
+                                                blocks->back()->put(&current, sizeof(render_data));
+                                            }
+
+                                            current = render_data();
+
+                                            i = 0;
+                                        }
+
+                                        for (int j = 0; j < 3; j++)
+                                        {
+                                            sub_elements.clear();
+                                            split_string(elements[j + 1], "/", sub_elements);
+
+                                            auto vert = vertices[strtol(sub_elements[0].c_str(), NULL, 10) - 1];
+                                            auto norm = vertex_normals[strtol(sub_elements[2].c_str(), NULL, 10) - 1];
+
+                                            current.vertices[i++] =
+                                            {
+                                                .position = { vert.x, vert.y, vert.z, 1.0f },
+                                                .diffuse = { 1.0f, 1.0f, 1.0f, 1.0f },
+                                                .normal_vector = { norm.x,  norm.y,  norm.z },
+                                                .texture_coord = { 0.0f,  1.0f },
+                                                .body_index = { 0U }
+                                            };
+                                        }
+                                }
+                            }
+                        });
+
+                        log.info("Mesh loaded with "
+                            + std::to_string((blocks->size() - 1) * MESH_BLOCK_SIZE + i)
+                            + " vertices ("
+                            + std::to_string(blocks->size())
+                            + " allocated blocks)");
+
+                        if (!blocks->empty())
+                        {
+                            current.num_vertices = i;
+
+                            {
+                                std::lock_guard<std::mutex> lock(blocks_mut);
+                                blocks->push_back(ext->create_buffer(ctx, 0));
+                                blocks->back()->put(&current, sizeof(render_data));
+                            }
+                        }
+
+                        p->set_value();
+                    });
+                }
 
             }
 

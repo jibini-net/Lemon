@@ -28,7 +28,7 @@ namespace lemon
      * @brief Simple double-ended queue implementation.
      * @author Zach Goethel
      */
-       template <class T>
+    template <class T>
     class deque
     {
         protected:

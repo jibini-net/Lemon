@@ -18,17 +18,17 @@ namespace lemon
      * This allows multiple threads to queue tasks for execution on a collection
      * of worker threads, or for secondary threads to post tasks for execution
      * on the main thread (or a thread containing a graphical context).
-     * 
+     *
      * Queued execution on the main thread is useful for GLFW windowing
      * operations, as many GLFW operations may only be called from the main
      * application thread.  Execution may also be queued in a thread which
      * maintains an OpenGL or OpenAL context.  Any thread can then enqueue
      * render and audio calls.
-     * 
+     *
      * A worker thread can either be parked on an existing thread, or passed a
      * flag to start a new thread.  If the thread start flag is set, a new
      * thread will be spawned upon construction of a new worker thread.
-     * 
+     *
      * @brief Parks a thread and allows queuing of tasks for execution.
      * @author Zach Goethel
      */
@@ -40,26 +40,26 @@ namespace lemon
          * Execution is performed in a first-in first-out (FIFO) fashion. This
          * queue implementation may not be thread-safe, so access should be
          * synchronized by this worker thread container.
-         * 
+         *
          * The entirety of this queue will be executed upon an update cycle of
          * the worker thread.  When this queue is empty, the worker thread has
          * no tasks and will remain idle.
-         * 
+         *
          * @brief Task queue for this worker thread.
          */
-        deque<std::function<void()>> execution_queue;
+        deque<std::shared_ptr<std::function<void()>>> execution_queue;
 
         /**
          * @brief Stores which thread on which this worker is operating.
          */
-        std::atomic<std::thread::id> thread_id { std::thread::id() };
+        std::thread::id thread_id;
 
         /**
          * Indicates whether this worker thread is running on a parked thread.
          * A worker thread may not be parked on two threads, as that may cause
          * unexpected or undefined behavior with two threads pulling from the
          * task queue.
-         * 
+         *
          * @brief Set to true when this worker thread has a parked thread.
          */
         std::atomic<bool> is_parked { false };
@@ -84,24 +84,28 @@ namespace lemon
          */
         logger log { "Worker Thread" };
 
+        void execute_impl(std::shared_ptr<std::function<void()>> task);
+
+        void execute_wait_impl(std::shared_ptr<std::function<void()>> task);
+
     public:
         /**
          * Creates a new worker thread.  A worker thread can either park on an
          * existing thread, or spawn a new thread on which to perform task
          * execution.  See the class documentation for more information on the
          * behavior when this flag is set.
-         * 
+         *
          * Set the flag to false for context threads which are already running.
          * If a context is current in an existing thread, manually park a
          * worker thread on the context thread.
-         * 
+         *
          * Set the flag to true for threads which are simply for multithreaded
          * task execution, or if a context will be created after the worker
          * thread is started.  The created thread will automatically be parked,
          * so no manual call to the parking method is required.
-         * 
+         *
          * @brief Constructs and starts a new worker thread object.
-         * @param create_thread Whether the worker thread should spawn a new 
+         * @param create_thread Whether the worker thread should spawn a new
          *      thread on which to perform task execution.
          */
         worker_thread(bool create_thread = true);
@@ -115,13 +119,13 @@ namespace lemon
          * This function will infinitely hang and execute queued tasks as they
          * are added.  The task queue will be repeatedly executed fully, such
          * that each iteration over the queue leaves the queue empty.
-         * 
+         *
          * When the queue is empty, this function will wait until a new task is
          * added.  The thread will then unblock to execute the task.
-         * 
+         *
          * The internal queue implementation may not be thread-safe, so access
          * to it must be synchronized during adding and execution.
-         * 
+         *
          * @brief Function which sits and waits on the worker thread.
          */
         void park();
@@ -130,20 +134,30 @@ namespace lemon
          * Adds the provided function to the worker thread's execution queue.
          * The task will be executed at the next iteration over the task queue.
          * Execution is performed in a first-in first-out (FIFO) fashion.
-         * 
+         *
          * The internal queue implementation may not be thread-safe, so access
          * to it must be synchronized during adding and execution.
-         * 
+         *
          * @brief Enqueues the task to execute on this worker thread.
          * @param task Function containing the task to queue for execution.
          */
-        void execute(std::function<void()> task);
+        template <typename F>
+        void execute(F&& task)
+        {
+            auto f = std::make_shared<std::function<void()>>(std::forward<F>(task));
+            execute_impl(f);
+        }
 
         /**
          * @brief Performs execution and hangs until the task is complete.
          * @param task Function containing the task to queue for execution.
          */
-        void execute_wait(std::function<void()> task);
+        template <typename F>
+        void execute_wait(F&& task)
+        {
+            auto f = std::make_shared<std::function<void()>>(std::forward<F>(task));
+            execute_wait_impl(f);
+        }
     };
 
     /**
@@ -151,16 +165,16 @@ namespace lemon
      * of worker threads will be created an managed, resulting in a unified
      * interface which will automatically execute provided tasks in the most
      * efficient manner.
-     * 
+     *
      * The default number of threads is the hardware concurrency value, likely
      * the number of logical processors of the host system.
-     * 
+     *
      * The specific implementation of load-balancing is undefined, but expect a
      * distribution of tasks to worker threads via a round-robbin selection or
      * via finding the current shortest queue.  Once an adequate workload is
      * assigned relatively evenly across worker threads, execution should remain
      * faster than single-threading despite lackluster load-balancing.
-     * 
+     *
      * @brief A collection of several load-balanced worker threads.
      * @author Zach Goethel
      */
@@ -188,10 +202,10 @@ namespace lemon
          * will be created and started.  The number of threads is reliant on the
          * user's request, but when no number is provided, the number of threads
          * will match the number of logical cores on the host system.
-         * 
+         *
          * The constructor will block until all threads are successfully
          * started, and tasks can be assigned immediately following construction.
-         * 
+         *
          * @brief Constructs and starts a new pool of worker threads.
          * @param num_workers The number of threads to start and assign to this
          *      pool, which defaults to the system's number of logical cores.
@@ -201,10 +215,10 @@ namespace lemon
         /**
          * This destructor will cause worker threads to cease executing and
          * terminate.  The worker threads will also be destroyed as a result.
-         * 
+         *
          * This method will hang until all worker threads have terminated and
          * their memory has been deallocated.
-         * 
+         *
          * @brief Destroys and deallocates the worker thread pool.
          */
         ~worker_pool();
@@ -215,14 +229,19 @@ namespace lemon
          * balancing) is undefined and subject to change, but expect a round-
          * robin or "shortest queue" selection of a worker thread to perform
          * the provided task.
-         * 
+         *
          * There is no guarantee of execution order for tasks provided to this
-         * method.  No two sequential tasks may necessarily be assigned to the 
+         * method.  No two sequential tasks may necessarily be assigned to the
          * same worker's queue, thus execution order is unpredictable.
-         * 
+         *
          * @brief Enqueues the task to execute on a worker thread.
          * @param task Function containing the task to queue for execution.
          */
-        void execute(std::function<void()> task);
+        template <typename F>
+        void execute(F&& task)
+        {
+            auto worker_index = this->round_robin.fetch_add(1) % (int)this->workers.size();
+            this->workers[worker_index]->execute(std::forward<F>(task));
+        }
     };
 }

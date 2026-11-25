@@ -6,8 +6,8 @@ namespace lemon
     {
         // Queue directly to worker thread
         if (wait)
-            this->thread.execute_wait(task);
+            this->thread.execute_wait(std::move(task));
         else
-            this->thread.execute(task);
+            this->thread.execute(std::move(task));
     }
 }

@@ -58,9 +58,13 @@ namespace lemon
 		// Track powers of ten for number printing
 		int num_digits_accum = 0;
 
-       // Localize the date/time
+       // Localize the date/time (thread-safe)
         struct tm date_tm;
+#if defined(_WIN32)
+        localtime_s(&date_tm, &now_c);
+#else
         localtime_r(&now_c, &date_tm);
+#endif
         auto date_time = &date_tm;
 
 		// Store the last command character and numerical digit
@@ -84,7 +88,11 @@ namespace lemon
 					num_digit_count = 0;
 
                now_c = time(nullptr);
-					localtime_r(&now_c, &date_tm);
+#if defined(_WIN32)
+                    localtime_s(&date_tm, &now_c);
+#else
+                    localtime_r(&now_c, &date_tm);
+#endif
                     date_time = &date_tm;
 
 					date_time->tm_year += 1900;
