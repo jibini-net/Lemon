@@ -34,9 +34,9 @@ namespace lemon
             /**
              * @brief Destroys and deallocates the resource object correctly.
              */
-            ~resource()
+            virtual ~resource()
             { }
     };
 
-    std::string read_file(std::string path, bool aggregate = true, std::function<void(std::string)> per_line = [](auto s) { });
+    std::string read_file(std::string path, bool aggregate = true, std::function<void(std::string)> per_line = [](std::string) { });
 }

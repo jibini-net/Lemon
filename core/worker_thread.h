@@ -2,8 +2,10 @@
 
 #include <atomic>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 #include "sem_polyfill.h"
 #include "logger.h"
@@ -50,7 +52,7 @@ namespace lemon
         /**
          * @brief Stores which thread on which this worker is operating.
          */
-        std::thread::id thread_id;
+        std::atomic<std::thread::id> thread_id { std::thread::id() };
 
         /**
          * Indicates whether this worker thread is running on a parked thread.
@@ -60,12 +62,22 @@ namespace lemon
          * 
          * @brief Set to true when this worker thread has a parked thread.
          */
-        bool is_parked = false;
+        std::atomic<bool> is_parked { false };
 
         /**
          * @brief Semaphore for adding and acquiring tasks in the queue.
          */
         std::counting_semaphore<512> semaphore { 0 };
+
+        /**
+         * @brief The spawned thread, if create_thread was true.
+         */
+        std::thread thread_handle;
+
+        /**
+         * @brief Whether this worker_thread spawned its own thread.
+         */
+        bool owns_thread = false;
 
         /**
          * @brief A logger instance for log messages related to this class.
@@ -93,6 +105,11 @@ namespace lemon
          *      thread on which to perform task execution.
          */
         worker_thread(bool create_thread = true);
+
+        /**
+         * @brief Shuts down the worker thread, signaling it to stop.
+         */
+        ~worker_thread();
 
         /**
          * This function will infinitely hang and execute queued tasks as they
@@ -151,26 +168,9 @@ namespace lemon
     {
     private:
         /**
-         * A dynamically allocated array of dynamically allocated worker
-         * threads; this array must be properly allocated and deallocated upon
-         * startup and shutdown of the worker thread pool.
-         * 
-         * @brief A dynamically allocated array of pointers to worker threads.
+         * @brief Worker threads managed by this pool.
          */
-        worker_thread** workers;
-
-        /**
-         * This value specifies the number of threads which were created and
-         * started upon creation of this worker thread pool.  This number is
-         * usually equal to the number of the host system's logical cores, but
-         * this value can be overridden via the constructor.
-         * 
-         * A record of this count is maintained as the worker array is
-         * dynamically allocated and deleted.
-         * 
-         * @brief The number of worker threads assigned to this worker pool.
-         */
-        int num_workers;
+        std::vector<std::unique_ptr<worker_thread>> workers;
 
         /**
          * @brief Atomic counter for round-robin load balancing across workers.

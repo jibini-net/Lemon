@@ -5,6 +5,8 @@
 #include "ext_opengl/gl_program.h"
 #include "ext_glfw/ext_glfw.h"
 
+#include <chrono>
+#include <future>
 #include <iostream>
 #include <thread>
 #include <filesystem>
@@ -64,6 +66,8 @@ namespace lemon
             std::shared_ptr<shader_buffer> bodies;
             std::vector<std::shared_ptr<shader_buffer>> blocks;
 
+            std::future<void> obj_loader_future;
+
         public:
             bootstrap() : application(EXT)
             { }
@@ -84,7 +88,10 @@ namespace lemon
                 });
 
                 bodies = ext->create_buffer(app_context, 1);
-                bodies->put(new body_data, sizeof(body_data));
+                {
+                    body_data data;
+                    bodies->put(&data, sizeof(body_data));
+                }
                 bodies->map_scoped<body_data>(true, true, [&](auto mapped)
                 {
                     auto w = 70.0f * 1.5f;
@@ -104,15 +111,19 @@ namespace lemon
                     };
                 });
 
-                primary_pool.execute([&]()
+                std::promise<void> obj_loader_promise;
+                obj_loader_future = obj_loader_promise.get_future();
+
+                primary_pool.execute([&, p = std::move(obj_loader_promise)]() mutable
                 {
                     std::string fname = "models/xyzrgb_dragon.obj";
                     const float heuristic = 0.03575f * 1.25f;
                     long long model_size = std::filesystem::file_size(fname);
 
-                    blocks_mut.lock(); //TODO
-                    blocks.clear();
-                    blocks_mut.unlock();
+                    {
+                        std::lock_guard<std::mutex> lock(blocks_mut);
+                        blocks.clear();
+                    }
 
                     static logger log("OBJ Loader");
 
@@ -125,7 +136,7 @@ namespace lemon
                         + std::to_string(vertices.capacity())
                         + " vertices");
 
-                    render_data* current = new render_data;
+                    render_data current;
                     int i = 0;
 
                     read_file(fname, false, [&](std::string line)
@@ -154,18 +165,19 @@ namespace lemon
                                     break;
 
                                 case 'f':
-                                    if (current == nullptr || i == MESH_BLOCK_SIZE)
+                                    if (i == MESH_BLOCK_SIZE)
                                     {
                                         log.debug("Allocating next mesh block of "
                                             + std::to_string(MESH_BLOCK_SIZE)
                                             + " vertices");
 
-                                        blocks_mut.lock();
-                                        blocks.push_back(ext->create_buffer(app_context, 0));
-                                        blocks.back()->put(current, sizeof(render_data));
-                                        blocks_mut.unlock();
+                                        {
+                                            std::lock_guard<std::mutex> lock(blocks_mut);
+                                            blocks.push_back(ext->create_buffer(app_context, 0));
+                                            blocks.back()->put(&current, sizeof(render_data));
+                                        }
 
-                                        current = new render_data;
+                                        current = render_data();
 
                                         i = 0;
                                     }
@@ -178,7 +190,7 @@ namespace lemon
                                         auto vert = vertices[strtol(sub_elements[0].c_str(), NULL, 10) - 1];
                                         auto norm = vertex_normals[strtol(sub_elements[2].c_str(), NULL, 10) - 1];
 
-                                        current->vertices[i++] =
+                                        current.vertices[i++] =
                                         {
                                             .position = { vert.x, vert.y, vert.z, 1.0f },
                                             .diffuse = { 1.0f, 1.0f, 1.0f, 1.0f },
@@ -197,15 +209,18 @@ namespace lemon
                         + std::to_string(blocks.size())
                         + " allocated blocks)");
                     
-                    if (blocks.size() > 0)
+                    if (!blocks.empty())
                     {
-                        current->num_vertices = i;
+                        current.num_vertices = i;
 
-                        blocks_mut.lock();
-                        blocks.push_back(ext->create_buffer(app_context, 0));
-                        blocks.back()->put(current, sizeof(render_data));
-                        blocks_mut.unlock();
+                        {
+                            std::lock_guard<std::mutex> lock(blocks_mut);
+                            blocks.push_back(ext->create_buffer(app_context, 0));
+                            blocks.back()->put(&current, sizeof(render_data));
+                        }
                     }
+
+                    p.set_value();
                 });
 
             }
@@ -225,23 +240,30 @@ namespace lemon
                 });
 
                 // Render each model mesh block; not yet abstracted
-                blocks_mut.lock();
-                for (int i = 0; i < blocks.size(); i++)
                 {
-                    static_cast<gl_ssbo*>(blocks[i].get())->bind_base();
-                    static_cast<gl_ssbo*>(bodies.get())->bind_base();
-
-                    app_context->perform([]()
+                    std::lock_guard<std::mutex> lock(blocks_mut);
+                    for (int i = 0; i < (int)blocks.size(); i++)
                     {
-                        glDrawArrays(GL_TRIANGLES, 0, MESH_BLOCK_SIZE);
-                    });
+                        static_cast<gl_ssbo*>(blocks[i].get())->bind_base();
+                        static_cast<gl_ssbo*>(bodies.get())->bind_base();
+
+                        app_context->perform([]()
+                        {
+                            glDrawArrays(GL_TRIANGLES, 0, MESH_BLOCK_SIZE);
+                        });
+                    }
                 }
-                blocks_mut.unlock();
             }
 
             void destroy()
             {
-                this->blocks.clear();
+                if (obj_loader_future.valid())
+                    obj_loader_future.wait();
+
+                {
+                    std::lock_guard<std::mutex> lock(blocks_mut);
+                    this->blocks.clear();
+                }
 
                 this->bodies.reset();
                 this->shader.reset();

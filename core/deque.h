@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mutex>
+#include <stdexcept>
 
 namespace lemon
 {
@@ -27,7 +28,7 @@ namespace lemon
      * @brief Simple double-ended queue implementation.
      * @author Zach Goethel
      */
-    template <class T>
+       template <class T>
     class deque
     {
         protected:
@@ -37,7 +38,24 @@ namespace lemon
             deque_node<T>* last = head;
 
             std::mutex mutex;
-        
+
+        public:
+            ~deque()
+            {
+                std::lock_guard<std::mutex> lock(this->mutex);
+
+                while (head->next != nullptr)
+                {
+                    auto d = head->next;
+                    head->next = d->next;
+                    delete d;
+                }
+                delete head;
+                head = nullptr;
+                last = nullptr;
+                len = 0;
+            }
+
         private:
             void _add(T element)
             {
@@ -60,6 +78,9 @@ namespace lemon
 
             T _poll()
             {
+                if (head->next == nullptr)
+                    throw std::runtime_error("Cannot poll from an empty deque");
+
                 T val = head->next->data;
                 auto d = head->next;
                 head->next = head->next->next;

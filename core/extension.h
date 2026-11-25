@@ -9,6 +9,9 @@ namespace lemon
     class extension
     {
         public:
+            virtual ~extension()
+            { }
+
             virtual std::shared_ptr<context> create_context()
             { return std::shared_ptr<context>(); }
 

@@ -72,7 +72,9 @@ namespace lemon
              *      the context's dedicated thread.
              * @param wait Whether or not the call should hang until complete.
              */
-            void perform(std::function<void()> task, bool wait = false);
+            virtual ~context() = default;
+
+        void perform(std::function<void()> task, bool wait = false);
 
             /**
              * @brief Updates the context, swaps the framebuffer, and polls input.

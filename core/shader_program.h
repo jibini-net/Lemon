@@ -16,7 +16,7 @@ namespace lemon
         shader_program(std::shared_ptr<context> in_context) : resource(in_context)
         { }
 
-        ~shader_program()
+        virtual ~shader_program()
         { }
     };
 }

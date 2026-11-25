@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 
@@ -33,7 +35,7 @@ namespace lemon
         /**
          * @brief A static flag of whether this context should close.
          */
-        bool should_close = false;
+        std::atomic<bool> should_close { false };
     
     public:
         /**

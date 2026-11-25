@@ -22,7 +22,7 @@ namespace lemon
         shader_buffer(std::shared_ptr<context> in_context) : resource(in_context)
         { }
 
-        ~shader_buffer()
+        virtual ~shader_buffer()
         { }
 
         virtual void* map(bool read, bool write)

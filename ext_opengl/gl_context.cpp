@@ -85,7 +85,7 @@ namespace lemon
         {
             glFlush();
 
-            this->should_close |= (bool)glfwWindowShouldClose(this->window_handle);
+            this->should_close.store(this->should_close.load() | (bool)glfwWindowShouldClose(this->window_handle));
             glfwSwapInterval(true);
             glfwSwapBuffers(this->window_handle);
 
@@ -95,11 +95,11 @@ namespace lemon
 
     bool gl_context::is_alive()
     {
-        return !this->should_close;
+        return !this->should_close.load();
     }
 
     void gl_context::kill()
     {
-        this->should_close = true;
+        this->should_close.store(true);
     }
 }
