@@ -4,16 +4,6 @@
 #include <math.h>
 #include <mutex>
 
-////////////////////////////////////////////////////////////////////////////////
-//                          Lemon 3D Graphics Engine                          //
-//                    COPYRIGHT (c) 2021 by ZACH GOETHEL                      //
-//  ------------------------------------------------------------------------  //
-//  Use freely.  This code is published under the MIT permissive open-source  //
-//  license.  For more information, see the license file included with this   //
-//  repository.  Good luck, and enjoy!                                        //
-//  ------------------------------------------------------------------------  //
-////////////////////////////////////////////////////////////////////////////////
-
 // The default coloration and pattern of a log message
 #define LOGGER_PATTERN std::string("\033[0;37m%d{yyyy-MM-dd} %t{hh:mm:ss}\033\
 [1;36m[%5p\033[1;36m][\033[1;37m%-15c\033[1;36m]\033[0;37m: %m%n\033[0m")

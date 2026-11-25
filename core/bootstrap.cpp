@@ -16,16 +16,6 @@
 #include "resource.h"
 #include "static_mesh.h"
 
-////////////////////////////////////////////////////////////////////////////////
-//                          Lemon 3D Graphics Engine                          //
-//                    COPYRIGHT (c) 2021 by ZACH GOETHEL                      //
-//  ------------------------------------------------------------------------  //
-//  Use freely.  This code is published under the MIT permissive open-source  //
-//  license.  For more information, see the license file included with this   //
-//  repository.  Good luck, and enjoy!                                        //
-//  ------------------------------------------------------------------------  //
-////////////////////////////////////////////////////////////////////////////////
-
 #define EXT std::shared_ptr<extension>(new ext_opengl(4, 6, true, true))
 
 namespace lemon
@@ -170,13 +160,12 @@ namespace lemon
                                             + std::to_string(MESH_BLOCK_SIZE)
                                             + " vertices");
 
-                                        // if (blocks.size() > 0)
-                                        //     blocks.back()->unmap();
-
+                                        blocks_mut.lock();
                                         blocks.push_back(ext->create_buffer(app_context, 0));
                                         blocks.back()->put(current, sizeof(render_data));
+                                        blocks_mut.unlock();
 
-                                        current = new render_data;//blocks.back()->map_typed<render_data>(true, true);
+                                        current = new render_data;
 
                                         i = 0;
                                     }
@@ -208,17 +197,15 @@ namespace lemon
                         + std::to_string(blocks.size())
                         + " allocated blocks)");
                     
-                    // Unmap the last unfilled buffer if there is one
                     if (blocks.size() > 0)
                     {
                         current->num_vertices = i;
-                        //blocks.back()->unmap();
 
+                        blocks_mut.lock();
                         blocks.push_back(ext->create_buffer(app_context, 0));
                         blocks.back()->put(current, sizeof(render_data));
+                        blocks_mut.unlock();
                     }
-
-                    //std::this_thread::sleep_for(std::chrono::seconds(10));
                 });
 
             }

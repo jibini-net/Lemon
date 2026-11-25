@@ -2,16 +2,6 @@
 
 #include "mat_vec.h"
 
-////////////////////////////////////////////////////////////////////////////////
-//                          Lemon 3D Graphics Engine                          //
-//                    COPYRIGHT (c) 2021 by ZACH GOETHEL                      //
-//  ------------------------------------------------------------------------  //
-//  Use freely.  This code is published under the MIT permissive open-source  //
-//  license.  For more information, see the license file included with this   //
-//  repository.  Good luck, and enjoy!                                        //
-//  ------------------------------------------------------------------------  //
-////////////////////////////////////////////////////////////////////////////////
-
 #define MESH_BLOCK_SIZE 65568 * 3
 #define MESH_MAX_BODIES 2048
 

@@ -92,15 +92,6 @@ target_link_libraries (LemonExt_OpenGL LemonCore)
 # OpenGL extension requires GLFW
 target_link_libraries (LemonExt_OpenGL LemonExt_GLFW)
 
-# Extension implementation for Vulkan
-add_library (LemonExt_Vulkan STATIC
-    "ext_vulkan/ext_vulkan.cpp"
-    )
-# Vulkan extension requires core library
-target_link_libraries (LemonExt_OpenGL LemonCore)
-# Vulkan extension requires GLFW
-target_link_libraries (LemonExt_OpenGL LemonExt_GLFW)
-
 #
 # Lemon core executable for context bootstrap
 #
@@ -111,7 +102,6 @@ add_executable (LemonRuntime
 target_link_libraries (LemonRuntime LemonCore)
 # Lemon runtime requires the binding libraries
 target_link_libraries (LemonRuntime LemonExt_OpenGL)
-target_link_libraries (LemonRuntime LemonExt_Vulkan)
 
 #
 # System OpenGL library (must be installed)
@@ -123,13 +113,7 @@ find_package (OpenGL REQUIRED)
 target_link_libraries (LemonExt_OpenGL OpenGL::GL)
 
 #
-# System Vulkan library (must be installed)
-#
-find_package (Vulkan REQUIRED)
-target_link_libraries (LemonExt_Vulkan Vulkan::Vulkan)
-
-#
-# GLFW v3.3.2 (extract into project directory)
+# GLFW v3.5.1 (extract into project directory)
 #
 set (GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
 set (GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
@@ -139,14 +123,7 @@ add_subdirectory ("glfw")
 target_link_libraries (LemonExt_GLFW glfw ${GLFW_LIBRARIES})
 
 #
-# GLEW v2.1.0 (extract into project directory)
-#
-# Fix for building with 'x64-Release' configuration:
-# ================
-# Comment out the following lines from the GLEW CMakeLists.txt:
-#
-# target_link_libraries (glew LINK_PRIVATE -BASE:0x62AA0000)
-# target_link_libraries (glew LINK_PRIVATE -nodefaultlib -noentry)
+# GLEW v2.3.1 (extract into project directory)
 #
 add_subdirectory ("glew/build/cmake")
 target_link_libraries (LemonExt_OpenGL glew_s ${GLEW_LIBRARIES})
